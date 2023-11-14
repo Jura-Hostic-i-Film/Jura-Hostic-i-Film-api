@@ -20,7 +20,7 @@ watchfiles==0.20.0
 websockets==11.0.3
 sqlalchemy==2.0.21
 passlib==1.7.4
-fastapi-jwt==0.2.0
+fastapi-jwt==0.1.8
 bcrypt==4.0.1
 httpx==0.25.1
 pytest==7.4.3

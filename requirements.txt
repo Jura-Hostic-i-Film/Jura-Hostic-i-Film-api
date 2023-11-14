@@ -24,4 +24,5 @@ fastapi-jwt==0.2.0
 bcrypt==4.0.1
 httpx==0.25.1
 pytest==7.4.3
+psycopg2-binary==2.9.9
 

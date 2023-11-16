@@ -60,10 +60,25 @@ class UserService(AppService):
 
         return self.register_user(user)
 
+    def admin_exists(self) -> bool:
+        admins = UserCRUD(self.db).get_users_by_role("admin")
+
+        if admins:
+            return True
+        return False
+
 
 class UserCRUD(AppCRUD):
     def create_user(self, user: UserCreate) -> UserDB:
         roles = []
+
+        user_db = self.db.query(UserDB).filter(UserDB.username == user.username).first()
+        if user_db:
+            raise UserException.UserAlreadyExists({"username": user.username})
+
+        user_db = self.db.query(UserDB).filter(UserDB.email == user.email).first()
+        if user_db:
+            raise UserException.UserAlreadyExists({"email": user.email})
 
         for role in user.roles:
             role_db = self.db.query(RoleDB).filter(RoleDB.name == role).first()

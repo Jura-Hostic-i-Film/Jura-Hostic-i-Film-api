@@ -49,3 +49,9 @@ async def me(db: get_db = Depends(), credentials: JwtAuthorizationCredentials = 
 async def login(user: UserLogin, db: get_db = Depends()) -> AccessToken:
     result = UserService(db).login_user(user.username, user.password)
     return result
+
+
+@router.get("/admin/exists")
+async def admin_exists(db: get_db = Depends()) -> bool:
+    result = UserService(db).admin_exists()
+    return bool(result)

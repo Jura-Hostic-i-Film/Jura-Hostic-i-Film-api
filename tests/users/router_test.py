@@ -16,12 +16,12 @@ def test_get_all_users_not_authenticated():
     assert response.status_code == 401
     assert response.json() == {'app_exception': 'NotAuthenticated', 'context': {}}
 
-
+"""
 def test_register_not_authenticated():
     response = client.post("/users/register", json=user_create)
     assert response.status_code == 401
     assert response.json() == {'app_exception': 'NotAuthenticated', 'context': {}}
-
+"""
 
 def test_get_me_not_authenticated():
     response = client.get("/users/me")

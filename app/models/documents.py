@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DATETIME, BLOB, ForeignKey
+from sqlalchemy import Column, Integer, String, DATETIME, ForeignKey, LargeBinary
 from sqlalchemy.orm import relationship
 
 from app.config.database import Base
@@ -22,6 +22,5 @@ class ImageDB(Base):
     __tablename__ = "images"
 
     id = Column(Integer, primary_key=True, index=True)
-    image_file = Column(BLOB, nullable=True)
+    image_file = Column(LargeBinary, nullable=True)
     document = relationship("DocumentDB", back_populates="image", single_parent=True)
-    # TODO figure out if there is a better alternative for BLOB

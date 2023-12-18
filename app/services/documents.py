@@ -1,8 +1,11 @@
+from datetime import datetime
 from random import randint
 from typing import Type
 
+from fastapi import UploadFile
+
 from app.models.documents import DocumentDB, ImageDB
-from app.schemas.documents import DocumentCreate, Document, Image
+from app.schemas.documents import Document, Image
 from app.services.main import AppService, AppCRUD
 from app.services.users import UserService
 from app.utils.enums import DocumentTypeEnum, DocumentStatusEnum
@@ -19,7 +22,7 @@ class DocumentService(AppService):
         documents = DocumentCRUD(self.db).get_documents(owner.id)
         return documents
 
-    def create_document(self, document: DocumentCreate, owner_username: str) -> Document:
+    def create_document(self, image: UploadFile, owner_username: str) -> Document:
         owner = UserService(self.db).get_user(owner_username)
         document_status = DocumentStatusEnum.SCANNED
         summary = "Summary"   # give me OCR here?
@@ -31,7 +34,7 @@ class DocumentService(AppService):
         else:
             document_type = DocumentTypeEnum.INTERNAL
 
-        document = DocumentCRUD(self.db).create_document(document, owner.id, document_type, summary, document_status)
+        document = DocumentCRUD(self.db).create_document(image, owner.id, document_type, summary, document_status)
         return document
 
     def get_document(self, document_id: int) -> Document:
@@ -40,37 +43,40 @@ class DocumentService(AppService):
             raise DocumentException.DocumentNotFound({"document_id": document_id})
         return document
 
-    def get_image(self, document_id: int) -> bytes:
-        document = self.get_document(document_id)
-        image = DocumentCRUD(self.db).get_image(document.image_id)
-        return image.image_file
+    def get_image(self, image_id: int) -> Type[ImageDB]:
+        image = DocumentCRUD(self.db).get_image(image_id)
+        return image
 
     def update_document(self, document_id: int, new_status: DocumentStatusEnum) -> Document:
+        if new_status is None:
+            raise DocumentException.DocumentStatusNotProvided()
+
         document = self.get_document(document_id)
-        document = DocumentCRUD(self.db).update_document(document, new_status)
+        document.document_status = new_status
+        document = DocumentCRUD(self.db).update_document(document)
         return document
 
 
 class DocumentCRUD(AppCRUD):
-    def create_document(self, document: DocumentCreate, owner_id: int, document_type: DocumentTypeEnum, summary: str,
+    def create_document(self, image: UploadFile, owner_id: int, document_type: DocumentTypeEnum, summary: str,
                         document_status: DocumentStatusEnum) -> Document:
-        image = self.create_image(document.image_file)
+        image = self.create_image(image)
         documentdb = DocumentDB(
             image_id=image.id,
             owner_id=owner_id,
             document_type=document_type,
             summary=summary,
             document_status=document_status,
-            scan_time=document.scan_time
+            scan_time=datetime.now()
         )
         self.db.add(documentdb)
         self.db.commit()
         self.db.refresh(documentdb)
         return documentdb
 
-    def create_image(self, image_file: bytes) -> Image:
+    def create_image(self, image_file: UploadFile) -> Image:
         imagedb = ImageDB(
-            image_file=image_file
+            image_file=image_file.file.read()
         )
         self.db.add(imagedb)
         self.db.commit()
@@ -98,8 +104,7 @@ class DocumentCRUD(AppCRUD):
     def get_image(self, image_id: int) -> Type[ImageDB]:
         return self.db.query(ImageDB).filter(ImageDB.id == image_id).first()
 
-    def update_document(self, document: Document, new_status: DocumentStatusEnum) -> Document:
-        document.document_status = new_status  # don't know if this line here or in the service
+    def update_document(self, document: Document) -> Document:
         self.db.commit()
         self.db.refresh(document)
         return document

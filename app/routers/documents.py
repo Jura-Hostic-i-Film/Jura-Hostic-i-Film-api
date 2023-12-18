@@ -1,10 +1,13 @@
-from fastapi import APIRouter, Depends, Security
+import io
+
+from fastapi import APIRouter, Depends, Security, UploadFile
+from fastapi.responses import StreamingResponse
 from fastapi_jwt import JwtAuthorizationCredentials
 
 from app.config.database import get_db
 from app.config.jwt import access_security
 from app.decorators.authenticate import authenticate
-from app.schemas.documents import Document, DocumentCreate
+from app.schemas.documents import Document
 from app.services.documents import DocumentService
 from app.utils.enums import RolesEnum, DocumentTypeEnum, DocumentStatusEnum
 
@@ -36,10 +39,10 @@ async def me(db: get_db = Depends(),
 
 @router.post("/create")
 @authenticate()
-async def create_document(document: DocumentCreate, db: get_db = Depends(),
+async def create_document(image: UploadFile, db: get_db = Depends(),
                           credentials: JwtAuthorizationCredentials = Security(access_security)) -> Document:
     username = credentials["username"]
-    result = DocumentService(db).create_document(document, username)
+    result = DocumentService(db).create_document(image, username)
     return result
 
 
@@ -51,12 +54,12 @@ async def get_document(document_id: int, db: get_db = Depends(),
     return result
 
 
-@router.get("/image/{document_id}")  # via document_id or image_id?
+@router.get("/image/{image_id}")
 @authenticate()
-async def get_image(document_id: int, db: get_db = Depends(),
-                    credentials: JwtAuthorizationCredentials = Security(access_security)) -> bytes:
-    result = DocumentService(db).get_image(document_id)
-    return result
+async def get_image(image_id: int, db: get_db = Depends(),
+                    credentials: JwtAuthorizationCredentials = Security(access_security)):
+    image = DocumentService(db).get_image(image_id)
+    return StreamingResponse(io.BytesIO(image.image_file), media_type="image/jpeg")
 
 
 @router.post("/update/{document_id}")

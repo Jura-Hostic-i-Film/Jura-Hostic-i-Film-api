@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DATETIME, ForeignKey, LargeBinary
+from sqlalchemy import Column, Integer, String, ForeignKey, LargeBinary, DateTime
 from sqlalchemy.orm import relationship
 
 from app.config.database import Base
@@ -13,7 +13,7 @@ class DocumentDB(Base):
     document_type = Column(String)
     summary = Column(String)
     document_status = Column(String)
-    scan_time = Column(DATETIME)
+    scan_time = Column(DateTime)
     image = relationship("ImageDB", back_populates="document", single_parent=True)
     owner = relationship("UserDB", back_populates="documents", single_parent=True)
 

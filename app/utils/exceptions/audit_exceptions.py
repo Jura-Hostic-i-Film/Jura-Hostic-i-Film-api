@@ -1,5 +1,6 @@
 from app.utils.exceptions.app_exceptions import AppExceptionCase
 
+
 class AuditException:
     class AuditNotFound(AppExceptionCase):
         def __init__(self, context: dict):
@@ -24,4 +25,12 @@ class AuditException:
             Document audit not found
             """
             status_code = 404
+            AppExceptionCase.__init__(self, status_code, context)
+
+    class DocumentAlreadyAudited(AppExceptionCase):
+        def __init__(self, context: dict):
+            """
+            Document already audited
+            """
+            status_code = 409
             AppExceptionCase.__init__(self, status_code, context)

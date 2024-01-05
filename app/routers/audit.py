@@ -14,6 +14,7 @@ router = APIRouter(
     responses={404: {"description": "Not found"}},
 )
 
+
 @router.get("/")
 @authenticate([RolesEnum.ADMIN, RolesEnum.DIRECTOR])
 async def get_audits(usr: str | None = None, status: ActionStatus | None = None, db: get_db = Depends()) -> list[Audit]:
@@ -37,6 +38,7 @@ async def get_audits(usr: str | None = None, status: ActionStatus | None = None,
 
     return result
 
+
 @router.get("/me")
 @authenticate()
 async def me(status: ActionStatus | None = None, db: get_db = Depends(),
@@ -51,11 +53,13 @@ async def me(status: ActionStatus | None = None, db: get_db = Depends(),
 
     return result
 
+
 @router.post("/create")
 @authenticate()
 async def create_audit_request(audit: AuditCreate, db: get_db = Depends()) -> Audit:
     result = AuditService(db).create_audit_request(audit)
     return result
+
 
 @router.post("/audit/{document_id}")
 @authenticate([RolesEnum.ADMIN, RolesEnum.DIRECTOR])

@@ -1,17 +1,19 @@
 from typing import Type
 
 from app.models.audit import AuditDB
-from app.schemas.audit import Audit, AuditCreate
-from app.services.main import AppService, AppCRUD
+from app.schemas.audit import AuditCreate
+from app.services.main import AppService
 from app.utils.enums import ActionStatus
 from app.utils.exceptions.audit_exceptions import AuditException
 from datetime import datetime
+
 
 class AuditService(AppService):
     def get_all_audits(self) -> list[Type[AuditDB]]:
         audits = AuditCRUD(self.db).get_all_audits()
 
         return audits
+
     def get_pending_audits(self, username: str) -> list[Type[AuditDB]]:
         audits = AuditCRUD(self.db).get_audits_by_user_and_status(username, ActionStatus.PENDING)
 
@@ -51,6 +53,9 @@ class AuditService(AppService):
         audit = AuditCRUD(self.db).get_audit_by_document_id(document_id)
         if not audit:
             raise AuditException.DocumentAuditNotFound({"document_id": document_id})
+
+        if audit.audit_status == ActionStatus.DONE:
+            raise AuditException.DocumentAlreadyAudited({"document_id": document_id})
 
         audit.audit_status = ActionStatus.DONE
         audit.audited_at = datetime.now()

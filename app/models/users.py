@@ -22,7 +22,8 @@ class UserDB(Base):
     last_name = Column(String)
     roles = relationship("RoleDB", secondary=user_role, back_populates="users", cascade="all, delete")
     documents = relationship("DocumentDB", back_populates="owner")
-
+    signatures = relationship("SignatureDB", back_populates="owner")
+    #owner = relationship("OtherTable", back_populates="users")
 
 class RoleDB(Base):
     __tablename__ = "roles"

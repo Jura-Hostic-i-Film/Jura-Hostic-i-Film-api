@@ -29,6 +29,9 @@ class UserCreate(UserBase):
     password: str
     roles: list[RolesEnum]
 
+class UserUpdate(UserBase):
+    roles: list[RolesEnum]
+
 
 class UserLogin(BaseModel):
     username: str
@@ -49,3 +52,7 @@ class User(UserBase):
 
 class AccessToken(BaseModel):
     token: str
+
+
+class NewPassword(BaseModel):
+    password: str

@@ -16,12 +16,14 @@ def test_get_all_users_not_authenticated():
     assert response.status_code == 401
     assert response.json() == {'app_exception': 'NotAuthenticated', 'context': {}}
 
+
 """
 def test_register_not_authenticated():
     response = client.post("/users/register", json=user_create)
     assert response.status_code == 401
     assert response.json() == {'app_exception': 'NotAuthenticated', 'context': {}}
 """
+
 
 def test_get_me_not_authenticated():
     response = client.get("/users/me")
@@ -37,7 +39,8 @@ def test_get_all_users_not_authorized():
 
 
 def test_register_not_authorized():
-    response = client.post("/users/register", headers={"Authorization": f"Bearer {user_jwt}"}, json=user_create.model_dump())
+    response = client.post("/users/register", headers={"Authorization": f"Bearer {user_jwt}"},
+                           json=user_create.model_dump())
     assert response.status_code == 403
     assert response.json() == {'app_exception': "NotAuthorized", 'context': {}}
 
@@ -45,15 +48,15 @@ def test_register_not_authorized():
 # Success
 def test_get_all_users():
     mock_user_service = Mock(spec=UserService)
-    mock_user_service.get_all_users.return_value = [user.model_dump()]
+    mock_user_service.get_users.return_value = [user.model_dump()]
 
     with patch("app.routers.users.UserService", return_value=mock_user_service):
         response = client.get("/users/", headers={"Authorization": f"Bearer {admin_jwt}"})
 
-    mock_user_service.get_all_users.assert_called_once()
+    mock_user_service.get_users.assert_called_once()
 
     assert response.status_code == 200
-    assert response.json() == mock_user_service.get_all_users.return_value
+    assert response.json() == mock_user_service.get_users.return_value
 
 
 def test_register():
@@ -61,7 +64,8 @@ def test_register():
     mock_user_service.register_user.return_value = user.model_dump()
 
     with patch("app.routers.users.UserService", return_value=mock_user_service):
-        response = client.post("/users/register", headers={"Authorization": f"Bearer {admin_jwt}"}, json=user_create.model_dump())
+        response = client.post("/users/register", headers={"Authorization": f"Bearer {admin_jwt}"},
+                               json=user_create.model_dump())
 
     mock_user_service.register_user.assert_called_once()
 
@@ -114,7 +118,8 @@ def test_register_username_exists():
     mock_user_service.register_user.side_effect = UserException.UserAlreadyExists({"username": "test"})
 
     with patch("app.routers.users.UserService", return_value=mock_user_service):
-        response = client.post("/users/register", headers={"Authorization": f"Bearer {admin_jwt}"}, json=user_create.model_dump())
+        response = client.post("/users/register", headers={"Authorization": f"Bearer {admin_jwt}"},
+                               json=user_create.model_dump())
 
     mock_user_service.register_user.assert_called_once()
 
@@ -127,9 +132,52 @@ def test_register_director_exists():
     mock_user_service.register_user.side_effect = UserException.DirectorAlreadyExists({})
 
     with patch("app.routers.users.UserService", return_value=mock_user_service):
-        response = client.post("/users/register", headers={"Authorization": f"Bearer {admin_jwt}"}, json=user_create.model_dump())
+        response = client.post("/users/register", headers={"Authorization": f"Bearer {admin_jwt}"},
+                               json=user_create.model_dump())
 
     mock_user_service.register_user.assert_called_once()
 
     assert response.status_code == 409
     assert response.json() == {'app_exception': 'DirectorAlreadyExists', 'context': {}}
+
+
+
+def test_delete_user():
+    mock_user_service = Mock(spec=UserService)
+    mock_user_service.delete_user.return_value = user.model_dump()
+
+    with patch("app.routers.users.UserService", return_value=mock_user_service):
+        response = client.delete("/users/username", headers={"Authorization": f"Bearer {admin_jwt}"})
+
+    mock_user_service.delete_user.assert_called_once()
+
+    assert response.status_code == 200
+
+
+
+def test_update_user():
+    mock_user_service = Mock(spec=UserService)
+    mock_user_service.update_user.return_value = user.model_dump()
+
+    with patch("app.routers.users.UserService", return_value=mock_user_service):
+        response = client.put("/users/{user_id}", headers={"Authorization": f"Bearer {admin_jwt}"},
+                              json=user_create.model_dump())
+
+    mock_user_service.update_user.assert_called_once()
+
+    assert response.status_code == 200
+    assert response.json() == mock_user_service.update_user.return_value
+
+
+
+def test_update_user_password():
+    mock_user_service = Mock(spec=UserService)
+    mock_user_service.update_user_password.return_value = True
+
+    with patch("app.routers.users.UserService", return_value=mock_user_service):
+        response = client.put("/users/username/password", headers={"Authorization": f"Bearer {admin_jwt}"},
+                              json={"password": "new_password"})
+
+    mock_user_service.update_user_password.assert_called_once()
+
+    assert response.status_code == 200

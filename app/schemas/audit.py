@@ -13,9 +13,9 @@ class Audit(BaseModel):
     audited_by: User
     document: Document
 
-    @field_serializer('scan_time')
-    def serialize_dt(self, scan_time: datetime, _info):
-        return scan_time.strftime('%Y-%m-%dT%H:%M:%SZ')
+    @field_serializer('audited_at')
+    def serialize_dt(self, audited_at: datetime, _info):
+        return audited_at.strftime('%Y-%m-%dT%H:%M:%SZ')
 
     class Config:
         from_attributes = True

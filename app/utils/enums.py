@@ -10,6 +10,10 @@ class RolesEnum(str, Enum):
     ACCOUNTANT_INTERNAL = 'accountant_internal'
     EMPLOYEE = 'employee'
 
+class ActionStatus(str, Enum):
+    PENDING = 'pending'
+    DONE = 'done'
+
 
 class DocumentTypeEnum(str, Enum):
     RECEIPT = 'receipt'

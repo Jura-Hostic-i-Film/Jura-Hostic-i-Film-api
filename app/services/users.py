@@ -67,6 +67,9 @@ class UserService(AppService):
             return True
         return False
 
+    def get_user_by_id(self, user_id: int) -> User:
+        users = UserCRUD(self.db).get_user_by_id(user_id)
+
 
 class UserCRUD(AppCRUD):
     def create_user(self, user: UserCreate) -> UserDB:
@@ -107,3 +110,6 @@ class UserCRUD(AppCRUD):
 
     def get_users_by_role(self, role: str) -> list[Type[UserDB]]:
         return self.db.query(UserDB).filter(UserDB.roles.any(name=role)).all()
+
+    def get_user_by_id(self, user_id: int) -> UserDB:
+        return self.db.query(UserDB).filter(UserDB.id == user_id).first()

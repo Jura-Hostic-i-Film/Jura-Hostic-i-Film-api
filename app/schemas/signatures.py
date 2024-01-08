@@ -2,7 +2,6 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-
 from app.utils.enums import ActionStatus
 from app.schemas.users import User
 from app.schemas.documents import Document
@@ -10,10 +9,10 @@ from app.schemas.documents import Document
 
 class Signature(BaseModel):
     document: Document
-    sign_by: User
+    signed: User
     signature_id: int
-    signature_status: ActionStatus
-    signed_at: datetime
+    status: ActionStatus
+    signed_at: datetime | None = None
 
     class Config:
         from_attributes = True
@@ -23,7 +22,7 @@ class Signature(BaseModel):
         return {"document": self.document,
                 "sign_by": self.sign_by,
                 "signature_id": self.signature_id,
-                "signature_status": self.signature_status,
+                "status": self.status,
                 "signed_at": self.signed_at}
 
 

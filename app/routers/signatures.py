@@ -17,27 +17,27 @@ router = APIRouter(
 
 @router.get("/")
 @authenticate([RolesEnum.ADMIN, RolesEnum.DIRECTOR])
-async def get_signatures(user: str | None = None,
+async def get_signatures(user_id: int | None = None,
                          status: ActionStatus | None = None,
                          db: get_db = Depends(),
              credentials: JwtAuthorizationCredentials = Security(access_security)) -> list[Signature]:
-    if user is None and status is None:
+    if user_id is None and status is None:
         result = SignatureService(db).get_all_signatures()
 
-    elif user is None and status is not None:
+    elif user_id is None and status is not None:
         if status == ActionStatus.PENDING:
             result = SignatureService(db).get_all_pending_signatures()
         elif status == ActionStatus.DONE:
             result = SignatureService(db).get_all_signed_documents()
 
-    elif user is not None and status is None:
-        result = SignatureService(db).get_all_signatures_for_user(user)
+    elif user_id is not None and status is None:
+        result = SignatureService(db).get_all_signatures_for_user_by_id(user_id)
 
-    elif user is not None and status is not None:
+    elif user_id is not None and status is not None:
         if status == ActionStatus.PENDING:
-            result = SignatureService(db).get_pending_signatures(user)
+            result = SignatureService(db).get_pending_signatures_by_id(user_id)
         elif status == ActionStatus.DONE:
-            result = SignatureService(db).get_signed_documents(user)
+            result = SignatureService(db).get_signed_documents_by_id(user_id)
 
     return result
 
@@ -55,16 +55,16 @@ async def me(status: ActionStatus | None = None, db: get_db = Depends(),
              credentials: JwtAuthorizationCredentials = Security(access_security)) -> list[Signature]:
     username = credentials["username"]
     if status is None:
-        result = SignatureService(db).get_all_signatures_for_user(username)
+        result = SignatureService(db).get_all_signatures_for_user_by_username(username)
     elif status == ActionStatus.PENDING:
-        result = SignatureService(db).get_pending_signatures(username)
+        result = SignatureService(db).get_pending_signatures_by_username(username)
     elif status == ActionStatus.DONE:
-        result = SignatureService(db).get_signed_documents(username)
+        result = SignatureService(db).get_signed_documents_by_username(username)
     return result
 
 
 @router.post("/signature/{document_id}")
 @authenticate()
 async def sign_document(document_id: int, db: get_db = Depends(),
-             credentials: JwtAuthorizationCredentials = Security(access_security)) -> bool:
+             credentials: JwtAuthorizationCredentials = Security(access_security)) -> Signature:
     return SignatureService(db).sign_document(document_id)

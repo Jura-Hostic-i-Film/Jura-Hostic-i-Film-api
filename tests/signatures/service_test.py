@@ -51,7 +51,7 @@ def test_get_all_signed_documents():
 def test_sign_document():
     mock_signature_crud = Mock()
     mock_signature_crud.get_signed_by_document_id.return_value = signature1
-    mock_signature_crud.update_signature.return_value = True
+    mock_signature_crud.update_signature.return_value = signature1
     db = Mock()
 
     signature_service = SignatureService(db)
@@ -61,7 +61,7 @@ def test_sign_document():
 
     mock_signature_crud.get_signed_by_document_id.assert_called_once_with(1)
     mock_signature_crud.update_signature.assert_called_once()
-    assert result is True
+    assert result == signature1
 
 
 def test_create_signature():

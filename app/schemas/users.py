@@ -8,6 +8,7 @@ class Role(BaseModel):
 
     class Config:
         from_attributes = True
+        use_enum_values = True
 
     def __dict__(self):
         return {"name": self.name}

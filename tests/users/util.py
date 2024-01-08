@@ -12,7 +12,7 @@ user = User(
 )
 user_jwt = access_security.create_access_token(subject={"username": user.username, "roles": user.roles})
 admin = User(
-    id=1,
+    id=2,
     email="test@email.com",
     first_name="Test",
     last_name="Test",
@@ -21,7 +21,7 @@ admin = User(
 )
 admin_jwt = access_security.create_access_token(subject={"username": admin.username, "roles": [RolesEnum.ADMIN]})
 director = User(
-    id=1,
+    id=3,
     email="test@email.com",
     first_name="Test",
     last_name="Test",

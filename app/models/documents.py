@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, LargeBinary, DateTime
 from sqlalchemy.orm import relationship
 
+from app.models.archives import ArchiveDB
 from app.config.database import Base
 
 
@@ -18,6 +19,7 @@ class DocumentDB(Base):
     owner = relationship("UserDB", back_populates="documents", single_parent=True)
     audit = relationship("AuditDB", back_populates="document", single_parent=True)
     signatures = relationship("SignatureDB", back_populates="document", single_parent=True)
+    archives = relationship("ArchiveDB", back_populates="document", single_parent=True)
 
 
 class ImageDB(Base):

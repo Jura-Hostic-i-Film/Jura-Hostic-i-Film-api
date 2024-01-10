@@ -26,3 +26,29 @@ class DocumentException:
             """
             status_code = 400
             AppExceptionCase.__init__(self, status_code, context)
+
+    class DocumentNotDetected(AppExceptionCase):
+        def __init__(self):
+            """
+            Document not detected
+            """
+            status_code = 400
+            context = {"detail": "Document not detected"}
+            AppExceptionCase.__init__(self, status_code, context)
+
+    class ImageNotFound(AppExceptionCase):
+        def __init__(self, context: dict):
+            """
+            Image not found
+            """
+            status_code = 404
+            AppExceptionCase.__init__(self, status_code, context)
+
+    class ImageUploadFailed(AppExceptionCase):
+        def __init__(self):
+            """
+            Image upload failed
+            """
+            status_code = 500
+            context = {"detail": "Image upload failed"}
+            AppExceptionCase.__init__(self, status_code, context)

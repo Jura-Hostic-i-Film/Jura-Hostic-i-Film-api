@@ -1,8 +1,7 @@
 from math import atan
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
-from processors import Opener, Closer, EdgeDetector
+from app.utils.ocr.processors import Closer, EdgeDetector
 from sklearn.cluster import KMeans
 from itertools import combinations
 

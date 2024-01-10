@@ -8,7 +8,7 @@ from app.config.database import get_db
 from app.config.jwt import access_security
 from app.decorators.authenticate import authenticate
 from app.schemas.documents import Document
-from app.services.documents import DocumentService
+from app.services.documents import DocumentService, ImageService
 from app.utils.enums import RolesEnum, DocumentTypeEnum, DocumentStatusEnum
 
 router = APIRouter(
@@ -58,8 +58,9 @@ async def get_document(document_id: int, db: get_db = Depends(),
 @authenticate()
 async def get_image(image_id: int, db: get_db = Depends(),
                     credentials: JwtAuthorizationCredentials = Security(access_security)):
-    image = DocumentService(db).get_image(image_id)
-    return StreamingResponse(io.BytesIO(image.image_file), media_type="image/jpeg")
+    image = ImageService(db).get_image(image_id)
+
+    return StreamingResponse(io.BytesIO(image.file), media_type="image/jpeg")
 
 
 @router.post("/update/{document_id}")

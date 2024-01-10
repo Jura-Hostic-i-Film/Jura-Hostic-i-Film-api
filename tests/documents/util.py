@@ -3,7 +3,7 @@ from typing import BinaryIO
 from fastapi import UploadFile
 
 from app.models.documents import ImageDB
-from app.schemas.documents import Document, Image
+from app.schemas.documents import Document
 from app.utils.enums import DocumentTypeEnum, DocumentStatusEnum
 from tests.users.util import admin, director
 
@@ -13,13 +13,9 @@ uploaded_image = UploadFile(
     filename="test_image",
     file=image_file,
 )
-image = Image(
-    id=1,
-    image_file=uploaded_image
-)
 imageDB = ImageDB(
     id=1,
-    image_file=uploaded_image.file.read(),
+    image_path="test_image",
 )
 document1 = Document(
     id=1,

@@ -26,5 +26,5 @@ class ImageDB(Base):
     __tablename__ = "images"
 
     id = Column(Integer, primary_key=True, index=True)
-    image_file = Column(LargeBinary, nullable=True)
+    image_path = Column(String)
     document = relationship("DocumentDB", back_populates="image", single_parent=True)

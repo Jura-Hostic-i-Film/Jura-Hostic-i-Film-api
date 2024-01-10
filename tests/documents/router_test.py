@@ -56,7 +56,7 @@ def test_create_document():
     mock_document_service = Mock(spec=DocumentService)
     mock_document_service.create_document.return_value = documents[0].model_dump()
 
-    file_path = 'C:/Users/andre/Pictures/Screenshots/Snimka zaslona 2023-05-25 212844.png'
+    file_path = os.path.join(os.path.dirname(__file__), 'files', 'test_image.png')
     if os.path.isfile(file_path):
         _files = {'image': open(file_path, 'rb')}
         with patch("app.routers.documents.DocumentService", return_value=mock_document_service):

@@ -17,6 +17,7 @@ class DocumentDB(Base):
     image = relationship("ImageDB", back_populates="document", single_parent=True)
     owner = relationship("UserDB", back_populates="documents", single_parent=True)
     audit = relationship("AuditDB", back_populates="document", single_parent=True)
+    signatures = relationship("SignatureDB", back_populates="document", single_parent=True)
 
 
 class ImageDB(Base):

@@ -23,7 +23,8 @@ class UserDB(Base):
     roles = relationship("RoleDB", secondary=user_role, back_populates="users", cascade="all, delete")
     documents = relationship("DocumentDB", back_populates="owner")
     audits = relationship("AuditDB", back_populates="audited")
-
+    signatures = relationship("SignatureDB", back_populates="signed")
+    #archives = relationship("ArchiveDB", back_populates="archived")
 
 class RoleDB(Base):
     __tablename__ = "roles"

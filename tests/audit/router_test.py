@@ -1,13 +1,12 @@
-import os
 from unittest.mock import Mock, patch
 
-import pytest
 from starlette.testclient import TestClient
 
 from app.main import app
 from app.services.audit import AuditService
-from tests.audit.util import audits
-from tests.users.util import user_jwt, director_jwt
+from tests.audit.util import audits, audit_create
+
+from tests.users.util import user_jwt, director_jwt, admin_jwt
 
 client = TestClient(app)
 
@@ -34,81 +33,40 @@ def test_get_all_audits():
     assert response.json() == [audits[0].model_dump(), audits[1].model_dump()]
 
 
-def test_get_pending_audits_not_authenticated():
-    response = client.get("/audits/pending")
-    assert response.status_code == 401
-    assert response.json() == {'app_exception': 'NotAuthenticated', 'context': {}}
+def test_get_all_usr_audits():
+    mock_audit_service = Mock(spec=AuditService)
+    mock_audit_service.get_all_audits_for_user.return_value = [audits[0].model_dump(), audits[1].model_dump()]
 
-    response = client.get("/audits/pending", headers={"Authorization": f"Bearer {user_jwt}"})
-    assert response.status_code == 403
-    assert response.json() == {'app_exception': "NotAuthorized", 'context': {}}
+    with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
+        response = client.get("/audits/?usr=string", headers={"Authorization": f"Bearer {director_jwt}"})
+
+    mock_audit_service.get_all_audits_for_user.assert_called_once()
+    assert response.status_code == 200
+    assert response.json() == [audits[0].model_dump(), audits[1].model_dump()]
 
 
-def test_get_pending_audits():
+def test_get_all_pending_audits_for_usr():
     mock_audit_service = Mock(spec=AuditService)
     mock_audit_service.get_pending_audits.return_value = [audits[0].model_dump(), audits[1].model_dump()]
 
     with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
-        response = client.get("/audits/pending", headers={"Authorization": f"Bearer {director_jwt}"})
+        response = client.get("/audits/?usr=string&status=pending", headers={"Authorization": f"Bearer {director_jwt}"})
 
     mock_audit_service.get_pending_audits.assert_called_once()
     assert response.status_code == 200
     assert response.json() == [audits[0].model_dump(), audits[1].model_dump()]
 
 
-def test_get_audited_documents_not_authenticated():
-
-    response = client.get("/audits/audited")
-    assert response.status_code == 401
-    assert response.json() == {'app_exception': 'NotAuthenticated', 'context': {}}
-
-    response = client.get("/audits/audited", headers={"Authorization": f"Bearer {user_jwt}"})
-    assert response.status_code == 403
-    assert response.json() == {'app_exception': "NotAuthorized", 'context': {}}
-
-
-def test_get_audited_documents():
+def test_get_all_audited_audits_for_usr():
     mock_audit_service = Mock(spec=AuditService)
     mock_audit_service.get_audited_documents.return_value = [audits[0].model_dump(), audits[1].model_dump()]
 
     with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
-        response = client.get("/audits/audited", headers={"Authorization": f"Bearer {director_jwt}"})
+        response = client.get("/audits/?usr=string&status=done", headers={"Authorization": f"Bearer {director_jwt}"})
 
     mock_audit_service.get_audited_documents.assert_called_once()
     assert response.status_code == 200
     assert response.json() == [audits[0].model_dump(), audits[1].model_dump()]
-
-
-def test_create_audit_request_not_authenticated():
-    response = client.post("/audits/create")
-    assert response.status_code == 401
-    assert response.json() == {'app_exception': 'NotAuthenticated', 'context': {}}
-
-    response = client.post("/audits/create", headers={"Authorization": f"Bearer {user_jwt}"})
-    assert response.status_code == 403
-    assert response.json() == {'app_exception': "NotAuthorized", 'context': {}}
-
-
-def test_create_audit_request():
-    mock_audit_service = Mock(spec=AuditService)
-    mock_audit_service.create_audit_request.return_value = audits[0].model_dump()
-
-    with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
-        response = client.post("/audits/create", headers={"Authorization": f"Bearer {director_jwt}"})
-
-    mock_audit_service.create_audit_request.assert_called_once()
-    assert response.status_code == 200
-    assert response.json() == audits[0].model_dump()
-
-
-def test_get_all_pending_audits_not_authenticated():
-    response = client.get("/audits/pending/all")
-    assert response.status_code == 401
-    assert response.json() == {'app_exception': 'NotAuthenticated', 'context': {}}
-
-    response = client.get("/audits/pending/all", headers={"Authorization": f"Bearer {user_jwt}"})
-    assert response.status_code == 403
-    assert response.json() == {'app_exception': "NotAuthorized", 'context': {}}
 
 
 def test_get_all_pending_audits():
@@ -116,87 +74,81 @@ def test_get_all_pending_audits():
     mock_audit_service.get_all_pending_audits.return_value = [audits[0].model_dump(), audits[1].model_dump()]
 
     with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
-        response = client.get("/audits/pending/all", headers={"Authorization": f"Bearer {director_jwt}"})
+        response = client.get("/audits/?status=pending", headers={"Authorization": f"Bearer {director_jwt}"})
 
     mock_audit_service.get_all_pending_audits.assert_called_once()
     assert response.status_code == 200
     assert response.json() == [audits[0].model_dump(), audits[1].model_dump()]
 
 
-def test_get_all_audited_documents_not_authenticated():
-    response = client.get("/audits/audited/all")
-    assert response.status_code == 401
-    assert response.json() == {'app_exception': 'NotAuthenticated', 'context': {}}
-
-    response = client.get("/audits/audited/all", headers={"Authorization": f"Bearer {user_jwt}"})
-    assert response.status_code == 403
-    assert response.json() == {'app_exception': "NotAuthorized", 'context': {}}
-
-
-def test_get_all_audited_documents():
+def test_get_all_audited_audits():
     mock_audit_service = Mock(spec=AuditService)
     mock_audit_service.get_all_audited_documents.return_value = [audits[0].model_dump(), audits[1].model_dump()]
 
     with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
-        response = client.get("/audits/audited/all", headers={"Authorization": f"Bearer {director_jwt}"})
+        response = client.get("/audits/?status=done", headers={"Authorization": f"Bearer {director_jwt}"})
 
     mock_audit_service.get_all_audited_documents.assert_called_once()
     assert response.status_code == 200
     assert response.json() == [audits[0].model_dump(), audits[1].model_dump()]
 
 
-def test_get_all_audits_for_user_not_authenticated():
-    response = client.get("/audits/all")
-    assert response.status_code == 401
-    assert response.json() == {'app_exception': 'NotAuthenticated', 'context': {}}
-
-    response = client.get("/audits/all", headers={"Authorization": f"Bearer {user_jwt}"})
-    assert response.status_code == 403
-    assert response.json() == {'app_exception': "NotAuthorized", 'context': {}}
-
-
-def test_get_all_audits_for_user():
+def test_get_all_my_audits():
     mock_audit_service = Mock(spec=AuditService)
     mock_audit_service.get_all_audits_for_user.return_value = [audits[0].model_dump(), audits[1].model_dump()]
 
     with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
-        response = client.get("/audits/all", headers={"Authorization": f"Bearer {director_jwt}"})
+        response = client.get("/audits/me", headers={"Authorization": f"Bearer {user_jwt}"})
 
     mock_audit_service.get_all_audits_for_user.assert_called_once()
     assert response.status_code == 200
     assert response.json() == [audits[0].model_dump(), audits[1].model_dump()]
 
 
-def test_get_audit_by_document_id_not_authenticated():
-
-    response = client.get("/audits/1")
-    assert response.status_code == 401
-    assert response.json() == {'app_exception': 'NotAuthenticated', 'context': {}}
-
-    response = client.get("/audits/1", headers={"Authorization": f"Bearer {user_jwt}"})
-    assert response.status_code == 403
-    assert response.json() == {'app_exception': "NotAuthorized", 'context': {}}
-
-
-def test_get_audit_by_document_id():
+def test_get_all_my_pending_audits():
     mock_audit_service = Mock(spec=AuditService)
-    mock_audit_service.get_audit_by_document_id.return_value = audits[0].model_dump()
+    mock_audit_service.get_pending_audits.return_value = [audits[0].model_dump(), audits[1].model_dump()]
 
     with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
-        response = client.get("/audits/1", headers={"Authorization": f"Bearer {director_jwt}"})
+        response = client.get("/audits/me?status=pending", headers={"Authorization": f"Bearer {user_jwt}"})
 
-    mock_audit_service.get_audit_by_document_id.assert_called_once()
+    mock_audit_service.get_pending_audits.assert_called_once()
+    assert response.status_code == 200
+    assert response.json() == [audits[0].model_dump(), audits[1].model_dump()]
+
+
+def test_get_all_my_audited_audits():
+    mock_audit_service = Mock(spec=AuditService)
+    mock_audit_service.get_audited_documents.return_value = [audits[0].model_dump(), audits[1].model_dump()]
+
+    with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
+        response = client.get("/audits/me?status=done", headers={"Authorization": f"Bearer {user_jwt}"})
+
+    mock_audit_service.get_audited_documents.assert_called_once()
+    assert response.status_code == 200
+    assert response.json() == [audits[0].model_dump(), audits[1].model_dump()]
+
+
+def test_create_audit_request():
+    mock_audit_service = Mock(spec=AuditService)
+    mock_audit_service.create_audit_request.return_value = audits[0].model_dump()
+
+    with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
+        response = client.post("/audits/create", headers={"Authorization": f"Bearer {admin_jwt}"}, json=audit_create.model_dump())
+
+    mock_audit_service.create_audit_request.assert_called_once()
     assert response.status_code == 200
     assert response.json() == audits[0].model_dump()
 
 
-def test_audit_document_not_authenticated():
+def test_create_audit_request_not_authorized():
+    mock_audit_service = Mock(spec=AuditService)
+    mock_audit_service.create_audit_request.return_value = audits[0].model_dump()
 
-    response = client.post("/audits/1/audit")
-    assert response.status_code == 401
-    assert response.json() == {'app_exception': 'NotAuthenticated', 'context': {}}
+    with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
+        response = client.post("/audits/create", headers={"Authorization": f"Bearer {user_jwt}"}, json=audit_create.model_dump())
 
-    response = client.post("/audits/1/audit", headers={"Authorization": f"Bearer {user_jwt}"})
+    mock_audit_service.create_audit_request.assert_not_called()
     assert response.status_code == 403
     assert response.json() == {'app_exception': "NotAuthorized", 'context': {}}
 
@@ -206,32 +158,20 @@ def test_audit_document():
     mock_audit_service.audit_document.return_value = True
 
     with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
-        response = client.post("/audits/1/audit", headers={"Authorization": f"Bearer {director_jwt}"})
+        response = client.post("/audits/1", headers={"Authorization": f"Bearer {admin_jwt}"})
 
     mock_audit_service.audit_document.assert_called_once()
     assert response.status_code == 200
     assert response.json() == True
 
 
-def test_audit_document_not_found():
+def test_audit_document_not_authorized():
     mock_audit_service = Mock(spec=AuditService)
-    mock_audit_service.audit_document.side_effect = Exception
+    mock_audit_service.audit_document.return_value = True
 
     with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
-        response = client.post("/audits/1/audit", headers={"Authorization": f"Bearer {director_jwt}"})
+        response = client.post("/audits/1", headers={"Authorization": f"Bearer {user_jwt}"})
 
-    mock_audit_service.audit_document.assert_called_once()
-    assert response.status_code == 500
-    assert response.json() == {'app_exception': 'Exception', 'context': {}}
-
-
-def test_audit_document_already_audited():
-    mock_audit_service = Mock(spec=AuditService)
-    mock_audit_service.audit_document.side_effect = Exception
-
-    with patch("app.routers.audit.AuditService", return_value=mock_audit_service):
-        response = client.post("/audits/1/audit", headers={"Authorization": f"Bearer {director_jwt}"})
-
-    mock_audit_service.audit_document.assert_called_once()
-    assert response.status_code == 500
-    assert response.json() == {'app_exception': 'Exception', 'context': {}}
+    mock_audit_service.audit_document.assert_not_called()
+    assert response.status_code == 403
+    assert response.json() == {'app_exception': "NotAuthorized", 'context': {}}

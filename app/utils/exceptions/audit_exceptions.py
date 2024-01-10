@@ -18,7 +18,6 @@ class AuditException:
             status_code = 409
             AppExceptionCase.__init__(self, status_code, context)
 
-
     class DocumentAuditNotFound(AppExceptionCase):
         def __init__(self, context: dict):
             """

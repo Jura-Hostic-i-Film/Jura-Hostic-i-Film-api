@@ -44,8 +44,11 @@ class AuditService(AppService):
 
         return audits
 
-    def get_audit_by_document_id(self, document_id: int) -> AuditDB | None:
+    def get_audit_by_document_id(self, document_id: int) -> AuditDB:
         audit = AuditCRUD(self.db).get_audit_by_document_id(document_id)
+
+        if not audit:
+            raise AuditException.DocumentAuditNotFound({"document_id": document_id})
 
         return audit
 
@@ -54,10 +57,10 @@ class AuditService(AppService):
         if not audit:
             raise AuditException.DocumentAuditNotFound({"document_id": document_id})
 
-        if audit.audit_status == ActionStatus.DONE:
+        if audit.status == ActionStatus.DONE:
             raise AuditException.DocumentAlreadyAudited({"document_id": document_id})
 
-        audit.audit_status = ActionStatus.DONE
+        audit.status = ActionStatus.DONE
         audit.audited_at = datetime.now()
         self.db.commit()
         self.db.refresh(audit)
@@ -69,7 +72,7 @@ class AuditService(AppService):
         if not audit:
             raise AuditException.DocumentAuditNotFound({"document_id": document_id})
 
-        return audit.audit_status
+        return audit.status
 
 
 class AuditCRUD(AppService):
@@ -80,9 +83,10 @@ class AuditCRUD(AppService):
             raise AuditException.DocumentAuditAlreadyExists({"document_id": audit.document_id})
 
         auditdb = AuditDB(
-            audit_status=ActionStatus.PENDING,
+            status=ActionStatus.PENDING,
             audited_by=audit.audit_by,
-            document_id=audit.document_id
+            document_id=audit.document_id,
+            audited_at=None
         )
 
         self.db.add(auditdb)
@@ -91,7 +95,7 @@ class AuditCRUD(AppService):
 
         return auditdb
 
-    def get_audit(self, audit_id: int) -> AuditDB:
+    def get_audit(self, audit_id: int) -> AuditDB | None:
         audit = self.db.query(AuditDB).filter(AuditDB.audit_id == audit_id).first()
 
         return audit
@@ -107,12 +111,12 @@ class AuditCRUD(AppService):
         return audits
 
     def get_audits_by_status(self, status: ActionStatus) -> list[Type[AuditDB]]:
-        audits = self.db.query(AuditDB).filter(AuditDB.audit_status == status).all()
+        audits = self.db.query(AuditDB).filter(AuditDB.status == status).all()
 
         return audits
 
     def get_audits_by_user_and_status(self, username: str, status: ActionStatus) -> list[Type[AuditDB]]:
-        audits = self.db.query(AuditDB).filter(AuditDB.audited_by == username, AuditDB.audit_status == status).all()
+        audits = self.db.query(AuditDB).filter(AuditDB.audited_by == username, AuditDB.status == status).all()
 
         return audits
 

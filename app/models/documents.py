@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, LargeBinary, DateTime
 from sqlalchemy.orm import relationship
 
-from app.config.database import Base
+from app.models import Base
 
 
 class DocumentDB(Base):
@@ -16,6 +16,7 @@ class DocumentDB(Base):
     scan_time = Column(DateTime)
     image = relationship("ImageDB", back_populates="document", single_parent=True)
     owner = relationship("UserDB", back_populates="documents", single_parent=True)
+    audit = relationship("AuditDB", back_populates="document", single_parent=True)
 
 
 class ImageDB(Base):

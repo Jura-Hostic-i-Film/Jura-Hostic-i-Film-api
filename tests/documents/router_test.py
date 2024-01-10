@@ -93,7 +93,6 @@ def test_get_image():
     assert response.iter_bytes()
 
 
-
 def test_update_document():
     mock_document_service = Mock(spec=DocumentService)
     mock_document_service.update_document.return_value = documents[0].model_dump()

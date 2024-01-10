@@ -9,28 +9,29 @@ from app.services.audit import AuditService
 from app.utils.enums import ActionStatus, RolesEnum
 
 router = APIRouter(
-    prefix="/audit",
-    tags=["audit"],
+    prefix="/audits",
+    tags=["audits"],
     responses={404: {"description": "Not found"}},
 )
 
 
 @router.get("/")
 @authenticate([RolesEnum.ADMIN, RolesEnum.DIRECTOR])
-async def get_audits(usr: str | None = None, status: ActionStatus | None = None, db: get_db = Depends()) -> list[Audit]:
+async def get_audits(usr: str | None = None, status: ActionStatus | None = None, db: get_db = Depends(),
+                     credentials: JwtAuthorizationCredentials = Security(access_security)) -> list[Audit]:
     if usr is None and status is None:
         result = AuditService(db).get_all_audits()
 
-    elif usr is None and status is not None:
+    if usr is None and status is not None:
         if status == ActionStatus.PENDING:
             result = AuditService(db).get_all_pending_audits()
         else:
             result = AuditService(db).get_all_audited_documents()
 
-    elif usr is not None and status is None:
+    if usr is not None and status is None:
         result = AuditService(db).get_all_audits_for_user(usr)
 
-    else:
+    if usr is not None and status is not None:
         if status == ActionStatus.PENDING:
             result = AuditService(db).get_pending_audits(usr)
         else:
@@ -55,14 +56,16 @@ async def me(status: ActionStatus | None = None, db: get_db = Depends(),
 
 
 @router.post("/create")
-@authenticate()
-async def create_audit_request(audit: AuditCreate, db: get_db = Depends()) -> Audit:
+@authenticate([RolesEnum.ADMIN, RolesEnum.DIRECTOR])
+async def create_audit_request(audit: AuditCreate, db: get_db = Depends(),
+                               credentials: JwtAuthorizationCredentials = Security(access_security)) -> Audit:
     result = AuditService(db).create_audit_request(audit)
     return result
 
 
-@router.post("/audit/{document_id}")
-@authenticate([RolesEnum.ADMIN, RolesEnum.DIRECTOR])
-async def audit_document(document_id: int, db: get_db = Depends()) -> bool:
+@router.post("/{document_id}")
+@authenticate([RolesEnum.ADMIN, RolesEnum.AUDITOR])
+async def audit_document(document_id: int, db: get_db = Depends(),
+                         credentials: JwtAuthorizationCredentials = Security(access_security)) -> bool:
     result = AuditService(db).audit_document(document_id)
     return result

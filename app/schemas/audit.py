@@ -8,14 +8,14 @@ from app.schemas.documents import Document
 
 class Audit(BaseModel):
     audit_id: int
-    audit_status: ActionStatus
-    audited_at: datetime
-    audited_by: User
+    status: ActionStatus
+    audited_at: datetime | None = None
+    audited: User
     document: Document
 
     @field_serializer('audited_at')
-    def serialize_dt(self, audited_at: datetime, _info):
-        return audited_at.strftime('%Y-%m-%dT%H:%M:%SZ')
+    def serialize_dt(self, audited_at: datetime | None, _info):
+        return audited_at.strftime('%Y-%m-%dT%H:%M:%SZ') if audited_at else None
 
     class Config:
         from_attributes = True

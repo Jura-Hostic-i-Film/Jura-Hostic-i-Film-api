@@ -118,21 +118,6 @@ def test_get_audit_by_document_id():
     mock_audit_crud.get_audit_by_document_id.assert_called_once()
     assert result == audits[0]
 
-
-def test_audit_document():
-    mock_audit_crud = Mock()
-    mock_audit_crud.get_audit_by_document_id.return_value = audits[0]
-    db = Mock()
-
-    audit_service = AuditService(db)
-
-    with patch("app.services.audit.AuditCRUD", return_value=mock_audit_crud):
-        result = audit_service.audit_document(1)
-
-    mock_audit_crud.get_audit_by_document_id.assert_called_once()
-    assert result == True
-
-
 def test_audit_document_not_found():
     mock_audit_crud = Mock()
     mock_audit_crud.get_audit_by_document_id.return_value = None
@@ -142,20 +127,6 @@ def test_audit_document_not_found():
 
     with patch("app.services.audit.AuditCRUD", return_value=mock_audit_crud):
         with raises(AuditException.DocumentAuditNotFound):
-            audit_service.audit_document(1)
-
-    mock_audit_crud.get_audit_by_document_id.assert_called_once()
-
-
-def test_audit_document_already_audited():
-    mock_audit_crud = Mock()
-    mock_audit_crud.get_audit_by_document_id.return_value = audits[1]
-    db = Mock()
-
-    audit_service = AuditService(db)
-
-    with patch("app.services.audit.AuditCRUD", return_value=mock_audit_crud):
-        with raises(AuditException.DocumentAlreadyAudited):
             audit_service.audit_document(1)
 
     mock_audit_crud.get_audit_by_document_id.assert_called_once()

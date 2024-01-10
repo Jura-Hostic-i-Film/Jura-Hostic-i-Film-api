@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 
-from app.models import Base
+from app.config.database import Base
 
 
 class AuditDB(Base):

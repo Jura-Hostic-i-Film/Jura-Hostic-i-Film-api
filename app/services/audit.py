@@ -3,9 +3,12 @@ from typing import Type
 from app.models.audit import AuditDB
 from app.schemas.audit import AuditCreate
 from app.services.main import AppService
+from app.services.users import UserCRUD
 from app.utils.enums import ActionStatus
 from app.utils.exceptions.audit_exceptions import AuditException
 from datetime import datetime
+
+from app.utils.exceptions.user_exceptions import UserException
 
 
 class AuditService(AppService):
@@ -14,13 +17,13 @@ class AuditService(AppService):
 
         return audits
 
-    def get_pending_audits(self, username: str) -> list[Type[AuditDB]]:
-        audits = AuditCRUD(self.db).get_audits_by_user_and_status(username, ActionStatus.PENDING)
+    def get_pending_audits(self, user_id: int) -> list[Type[AuditDB]]:
+        audits = AuditCRUD(self.db).get_audits_by_user_and_status(user_id, ActionStatus.PENDING)
 
         return audits
 
-    def get_audited_documents(self, username: str) -> list[Type[AuditDB]]:
-        audits = AuditCRUD(self.db).get_audits_by_user_and_status(username, ActionStatus.DONE)
+    def get_audited_documents(self, user_id: int) -> list[Type[AuditDB]]:
+        audits = AuditCRUD(self.db).get_audits_by_user_and_status(user_id, ActionStatus.DONE)
 
         return audits
 
@@ -39,8 +42,8 @@ class AuditService(AppService):
 
         return audits
 
-    def get_all_audits_for_user(self, username: str) -> list[Type[AuditDB]]:
-        audits = AuditCRUD(self.db).get_audits_by_user(username)
+    def get_all_audits_for_user(self, user_id: int) -> list[Type[AuditDB]]:
+        audits = AuditCRUD(self.db).get_audits_by_user(user_id)
 
         return audits
 
@@ -52,7 +55,7 @@ class AuditService(AppService):
 
         return audit
 
-    def audit_document(self, document_id: int) -> bool:
+    def audit_document(self, document_id: int) -> AuditDB:
         audit = AuditCRUD(self.db).get_audit_by_document_id(document_id)
         if not audit:
             raise AuditException.DocumentAuditNotFound({"document_id": document_id})
@@ -62,8 +65,8 @@ class AuditService(AppService):
 
         audit.status = ActionStatus.DONE
         audit.audited_at = datetime.now()
-        self.db.commit()
-        self.db.refresh(audit)
+
+        AuditCRUD(self.db).update_audit(audit)
 
         return True
 
@@ -73,6 +76,33 @@ class AuditService(AppService):
             raise AuditException.DocumentAuditNotFound({"document_id": document_id})
 
         return audit.status
+
+    def get_all_audits_for_user_by_username(self, username: str) -> list[Type[AuditDB]]:
+        user = UserCRUD(self.db).get_user(username)
+        if not user:
+            raise UserException.UserNotFound({"username": username})
+
+        audits = AuditCRUD(self.db).get_audits_by_user(user.id)
+
+        return audits
+
+    def get_pending_audits_by_username(self, username: str) -> list[Type[AuditDB]]:
+        user = UserCRUD(self.db).get_user(username)
+        if not user:
+            raise UserException.UserNotFound({"username": username})
+
+        audits = AuditCRUD(self.db).get_audits_by_user_and_status(user.id, ActionStatus.PENDING)
+
+        return audits
+
+    def get_audited_documents_by_username(self, username: str) -> list[Type[AuditDB]]:
+        user = UserCRUD(self.db).get_user(username)
+        if not user:
+            raise UserException.UserNotFound({"username": username})
+
+        audits = AuditCRUD(self.db).get_audits_by_user_and_status(user.id, ActionStatus.DONE)
+
+        return audits
 
 
 class AuditCRUD(AppService):
@@ -105,8 +135,8 @@ class AuditCRUD(AppService):
 
         return audits
 
-    def get_audits_by_user(self, username: str) -> list[Type[AuditDB]]:
-        audits = self.db.query(AuditDB).filter(AuditDB.audited_by == username).all()
+    def get_audits_by_user(self, user_id: int) -> list[Type[AuditDB]]:
+        audits = self.db.query(AuditDB).filter(AuditDB.audited_by == user_id).all()
 
         return audits
 
@@ -115,12 +145,18 @@ class AuditCRUD(AppService):
 
         return audits
 
-    def get_audits_by_user_and_status(self, username: str, status: ActionStatus) -> list[Type[AuditDB]]:
-        audits = self.db.query(AuditDB).filter(AuditDB.audited_by == username, AuditDB.status == status).all()
+    def get_audits_by_user_and_status(self, user_id: int, status: ActionStatus) -> list[Type[AuditDB]]:
+        audits = self.db.query(AuditDB).filter(AuditDB.audited_by == user_id, AuditDB.status == status).all()
 
         return audits
 
     def get_audit_by_document_id(self, document_id: int) -> AuditDB | None:
         audit = self.db.query(AuditDB).filter(AuditDB.document_id == document_id).first()
+
+        return audit
+
+    def update_audit(self, audit: AuditDB) -> AuditDB:
+        self.db.commit()
+        self.db.refresh(audit)
 
         return audit

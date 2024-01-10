@@ -1,5 +1,5 @@
 from app.config.database import  engine, SessionLocal
-from app.models import Base
+from app.config.database import Base
 from app.models.users import RoleDB
 from app.utils.enums import RolesEnum
 

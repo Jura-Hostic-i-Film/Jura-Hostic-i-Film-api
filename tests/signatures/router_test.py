@@ -1,8 +1,5 @@
-from unittest.mock import Mock, patch
 from app.main import app
 from starlette.testclient import TestClient
-from app.services.signatures import SignatureService
-from tests.signatures.util import signature1
 from tests.users.util import user_jwt
 
 client = TestClient(app)

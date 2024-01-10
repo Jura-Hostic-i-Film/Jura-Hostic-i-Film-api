@@ -17,25 +17,25 @@ router = APIRouter(
 
 @router.get("/")
 @authenticate([RolesEnum.ADMIN, RolesEnum.DIRECTOR])
-async def get_audits(usr: str | None = None, status: ActionStatus | None = None, db: get_db = Depends(),
+async def get_audits(user_id: int | None = None, status: ActionStatus | None = None, db: get_db = Depends(),
                      credentials: JwtAuthorizationCredentials = Security(access_security)) -> list[Audit]:
-    if usr is None and status is None:
+    if user_id is None and status is None:
         result = AuditService(db).get_all_audits()
 
-    if usr is None and status is not None:
+    if user_id is None and status is not None:
         if status == ActionStatus.PENDING:
             result = AuditService(db).get_all_pending_audits()
         else:
             result = AuditService(db).get_all_audited_documents()
 
-    if usr is not None and status is None:
-        result = AuditService(db).get_all_audits_for_user(usr)
+    if user_id is not None and status is None:
+        result = AuditService(db).get_all_audits_for_user(user_id)
 
-    if usr is not None and status is not None:
+    if user_id is not None and status is not None:
         if status == ActionStatus.PENDING:
-            result = AuditService(db).get_pending_audits(usr)
+            result = AuditService(db).get_pending_audits(user_id)
         else:
-            result = AuditService(db).get_audited_documents(usr)
+            result = AuditService(db).get_audited_documents(user_id)
 
     return result
 
@@ -46,11 +46,11 @@ async def me(status: ActionStatus | None = None, db: get_db = Depends(),
              credentials: JwtAuthorizationCredentials = Security(access_security)) -> list[Audit]:
     username = credentials["username"]
     if status is None:
-        result = AuditService(db).get_all_audits_for_user(username)
+        result = AuditService(db).get_all_audits_for_user_by_username(username)
     elif status == ActionStatus.PENDING:
-        result = AuditService(db).get_pending_audits(username)
+        result = AuditService(db).get_pending_audits_by_username(username)
     else:
-        result = AuditService(db).get_audited_documents(username)
+        result = AuditService(db).get_audited_documents_by_username(username)
 
     return result
 
@@ -66,6 +66,6 @@ async def create_audit_request(audit: AuditCreate, db: get_db = Depends(),
 @router.post("/{document_id}")
 @authenticate([RolesEnum.ADMIN, RolesEnum.AUDITOR])
 async def audit_document(document_id: int, db: get_db = Depends(),
-                         credentials: JwtAuthorizationCredentials = Security(access_security)) -> bool:
+                         credentials: JwtAuthorizationCredentials = Security(access_security)) -> Audit:
     result = AuditService(db).audit_document(document_id)
     return result

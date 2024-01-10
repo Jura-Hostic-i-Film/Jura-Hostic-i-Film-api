@@ -43,7 +43,7 @@ async def get_signatures(user_id: int | None = None,
 
 
 @router.post("/create")
-@authenticate()
+@authenticate([RolesEnum.ADMIN, RolesEnum.DIRECTOR])
 async def create_signature(signature: SignatureCreate, db: get_db = Depends(),
              credentials: JwtAuthorizationCredentials = Security(access_security)) -> Signature:
     return SignatureService(db).create_signature_request(signature)
@@ -63,8 +63,8 @@ async def me(status: ActionStatus | None = None, db: get_db = Depends(),
     return result
 
 
-@router.post("/signature/{document_id}")
-@authenticate()
+@router.post("/{document_id}")
+@authenticate([RolesEnum.ADMIN, RolesEnum.DIRECTOR])
 async def sign_document(document_id: int, db: get_db = Depends(),
              credentials: JwtAuthorizationCredentials = Security(access_security)) -> Signature:
     return SignatureService(db).sign_document(document_id)

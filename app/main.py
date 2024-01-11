@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import users, documents, signatures, audit
+from app.routers import users, documents, signatures, audit, archives
 from app.utils.exceptions.app_exceptions import AppExceptionCase, app_exception_handler
 from app.utils.startup import create_tables, add_roles
 
@@ -20,3 +20,4 @@ app.include_router(users.router)
 app.include_router(documents.router)
 app.include_router(audit.router)
 app.include_router(signatures.router)
+app.include_router(archives.router)

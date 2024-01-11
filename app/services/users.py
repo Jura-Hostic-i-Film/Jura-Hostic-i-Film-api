@@ -44,8 +44,14 @@ class UserService(AppService):
 
         return user
 
-    def get_all_users(self) -> list[Type[UserDB]]:
-        users_db = UserCRUD(self.db).get_all()
+    def get_users(self, roles: list[RolesEnum] | None = None) -> list[User]:
+
+        if roles:
+            users_db = []
+            for role in roles:
+                users_db += UserCRUD(self.db).get_users_by_role(role.value)
+        else:
+            users_db = UserCRUD(self.db).get_all()
 
         return users_db
 
@@ -66,6 +72,17 @@ class UserService(AppService):
         if admins:
             return True
         return False
+
+    def delete_user(self, username: str) -> User:
+        return UserCRUD(self.db).delete_user(username)
+
+    def update_user(self, username: str, user: User) -> User:
+        return UserCRUD(self.db).update_user(username, user)
+
+    def update_user_password(self, username: str, password: str) -> bool:
+        user = UserCRUD(self.db).update_user_password(username, password)
+
+        return user
 
     def get_user_by_id(self, user_id: int) -> User:
         users = UserCRUD(self.db).get_user_by_id(user_id)
@@ -110,6 +127,54 @@ class UserCRUD(AppCRUD):
 
     def get_users_by_role(self, role: str) -> list[Type[UserDB]]:
         return self.db.query(UserDB).filter(UserDB.roles.any(name=role)).all()
+
+    def delete_user(self, username: str) -> UserDB:
+        user = self.db.query(UserDB).filter(UserDB.username == username).first()
+        if not user:
+            raise UserException.UserNotFound({"username": username})
+
+        self.db.delete(user)
+        self.db.commit()
+
+        return user
+
+    def update_user(self, username: str, user: User) -> UserDB:
+        user_db = self.db.query(UserDB).filter(UserDB.username == username).first()
+        if not user_db:
+            raise UserException.UserNotFound({"username": username})
+
+        user_db.email = user.email
+        user_db.first_name = user.first_name
+        user_db.last_name = user.last_name
+        user_db.username = user.username
+
+        roles = []
+        for role in user.roles:
+            role_db = self.db.query(RoleDB).filter(RoleDB.name == role).first()
+            if not role_db:
+                raise UserException.InvalidRole({"role": role})
+            roles.append(role_db)
+
+        user_db.roles = roles
+
+        self.db.commit()
+        self.db.refresh(user_db)
+
+        return user_db
+
+    def update_user_password(self, username: str, password: str) -> bool:
+        user_db = self.db.query(UserDB).filter(UserDB.username == username).first()
+        if not user_db:
+            raise UserException.UserNotFound({"username": username})
+
+        user_db.password = hash_password(password)
+
+        self.db.commit()
+        self.db.refresh(user_db)
+
+        return True
+
+
 
     def get_user_by_id(self, user_id: int) -> UserDB:
         return self.db.query(UserDB).filter(UserDB.id == user_id).first()

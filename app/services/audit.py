@@ -2,9 +2,11 @@ from typing import Type
 
 from app.models.audit import AuditDB
 from app.schemas.audit import AuditCreate
+from app.services.archives import ArchiveService
+from app.services.documents import DocumentService
 from app.services.main import AppService
 from app.services.users import UserCRUD
-from app.utils.enums import ActionStatus
+from app.utils.enums import ActionStatus, DocumentStatusEnum
 from app.utils.exceptions.audit_exceptions import AuditException
 from datetime import datetime
 
@@ -57,6 +59,8 @@ class AuditService(AppService):
 
     def audit_document(self, document_id: int) -> AuditDB:
         audit = AuditCRUD(self.db).get_audit_by_document_id(document_id)
+        document = DocumentService(self.db).get_document(document_id)
+
         if not audit:
             raise AuditException.DocumentAuditNotFound({"document_id": document_id})
 
@@ -68,7 +72,12 @@ class AuditService(AppService):
 
         AuditCRUD(self.db).update_audit(audit)
 
-        return True
+        document.document_status = DocumentStatusEnum.AUDITED
+
+        # create an archive request for the document
+        ArchiveService(self.db).create_archive_for_document(document_id, document.document_type)
+
+        return audit
 
     def get_audit_status(self, document_id: int) -> ActionStatus:
         audit = AuditCRUD(self.db).get_audit_by_document_id(document_id)
@@ -107,7 +116,6 @@ class AuditService(AppService):
 
 class AuditCRUD(AppService):
     def create_audit(self, audit: AuditCreate) -> AuditDB:
-
         audit_db = self.db.query(AuditDB).filter(AuditDB.document_id == audit.document_id).first()
         if audit_db:
             raise AuditException.DocumentAuditAlreadyExists({"document_id": audit.document_id})

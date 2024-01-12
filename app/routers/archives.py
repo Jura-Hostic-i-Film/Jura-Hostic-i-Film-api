@@ -63,6 +63,15 @@ async def me(status: ActionStatus | None = None, db: get_db = Depends(),
     return result
 
 
+@router.get("/me/pending")
+@authenticate()
+async def me_pending(db: get_db = Depends(),
+                     credentials: JwtAuthorizationCredentials = Security(access_security)) -> int:
+    username = credentials["username"]
+    result = ArchiveService(db).get_pending_archives_by_username(username)
+    return len(result)
+
+
 @router.post("/archive/{document_id}")
 @authenticate()
 async def archive_document(document_id: int, db: get_db = Depends(),

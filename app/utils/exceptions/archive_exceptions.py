@@ -16,3 +16,11 @@ class ArchiveException:
             """
             status_code = 409
             AppExceptionCase.__init__(self, status_code, context)
+
+    class DocumentTypeNotProvided(AppExceptionCase):
+        def __init__(self, context: dict):
+            """
+            Document type not provided
+            """
+            status_code = 400
+            AppExceptionCase.__init__(self, status_code, context)

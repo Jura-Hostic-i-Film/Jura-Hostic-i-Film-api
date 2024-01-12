@@ -57,3 +57,12 @@ class UserException:
             """
             status_code = 401
             AppExceptionCase.__init__(self, status_code, context)
+
+
+    class NoUsersWithRole(AppExceptionCase):
+        def __int__(self, context: dict):
+            """
+            No users with role
+            """
+            status_code = 404
+            AppExceptionCase.__init__(self, status_code, context)

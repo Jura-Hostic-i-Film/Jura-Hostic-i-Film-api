@@ -29,8 +29,3 @@ class DocumentStatusEnum(str, Enum):
     AUDITED = 'audited'
     SIGNED_AND_ARCHIVED = 'signed_and_archived'
     ARCHIVED = 'archived'
-
-
-class ActionStatus(str, Enum):
-    PENDING = 'pending'
-    DONE = 'done'

@@ -3,7 +3,8 @@ import numpy as np
 from easyocr import easyocr
 
 from app.utils.exceptions.document_exceptions import DocumentException
-
+from app.utils.ocr.processors import Resizer, FastDenoiser, OtsuThresholder
+from app.utils.ocr.hough_line_corner_detector import HoughLineCornerDetector
 
 class PageExtractor:
     def __init__(self, preprocessors, corner_detector, output_process=False):
@@ -12,9 +13,9 @@ class PageExtractor:
         self._corner_detector = corner_detector
         self.output_process = output_process
 
-    def __call__(self, image_path):
+    def __call__(self, image_bytes):
         # Step 1: Read image from file
-        self._image = cv2.imread(image_path)
+        self._image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_COLOR)
 
         # Step 2: Preprocess image
         self._processed = self._image
@@ -129,7 +130,7 @@ def extract_text_from_image(image):
     return extracted_text
 
 
-def detect_document(image_path):
+def detect_document(image: bytes):
     page_extractor = PageExtractor(
         preprocessors=[
             Resizer(height=1280, output_process=True),
@@ -144,7 +145,7 @@ def detect_document(image_path):
         )
     )
 
-    extracted = page_extractor(image_path)
+    extracted = page_extractor(image)
     text = extract_text_from_image(extracted)
 
     return text

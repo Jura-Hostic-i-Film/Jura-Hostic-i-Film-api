@@ -13,6 +13,7 @@ from app.services.main import AppService, AppCRUD
 from app.services.users import UserService
 from app.utils.enums import DocumentTypeEnum, DocumentStatusEnum
 from app.utils.exceptions.document_exceptions import DocumentException
+from app.utils.ocr.ocr import detect_document
 
 import app.services.audit as audit
 from app.utils.util import COMPATIBLE_STATUSES
@@ -34,7 +35,12 @@ class DocumentService(AppService):
     def create_document(self, image: UploadFile, owner_username: str) -> Document:
         owner = UserService(self.db).get_user(owner_username)
         document_status = DocumentStatusEnum.SCANNED
-        summary = "Summary"  # give me OCR here?
+
+        image_data = image.file.read()
+        image_filename = image.filename
+
+        summary = detect_document(image_data)
+
         rand = randint(1, 3)  # because why not
         if rand == 1:
             document_type = DocumentTypeEnum.OFFER
@@ -43,7 +49,7 @@ class DocumentService(AppService):
         else:
             document_type = DocumentTypeEnum.INTERNAL
 
-        image_db = ImageCRUD(self.db).create_image(image)
+        image_db = ImageCRUD(self.db).create_image(image_data, image_filename)
 
         document = DocumentCRUD(self.db).create_document(image_db, owner.id, document_type, summary, document_status)
         return document
@@ -124,8 +130,8 @@ class ImageService(AppService):
         image = ImageCRUD(self.db).get_image(image_id)
         return image
 
-    def create_image(self, image_file: UploadFile) -> ImageDB:
-        image = ImageCRUD(self.db).create_image(image_file)
+    def create_image(self, image_data: bytes, image_filename: str) -> ImageDB:
+        image = ImageCRUD(self.db).create_image(image_data, image_filename)
         return image
 
 
@@ -147,20 +153,21 @@ class ImageCRUD(AppCRUD):
             # get image from blob storage
             try:
                 image_data = self.container_client.download_blob(image_path)
-                image_file = UploadFile(filename=image_path, file=image_data.readall())
+                image_file = UploadFile(filename=image_path, file=File(image_data.readall()))
             except FileNotFoundError:
                 raise DocumentException.ImageNotFound({"image_id": image_id})
         else:
             # get image from disk
             try:
-                image_file = open(image_path, "rb")
+                file = open(image_path, "rb")
+                image_file = UploadFile(filename=image_path, file=file)
             except FileNotFoundError:
                 raise DocumentException.ImageNotFound({"image_id": image_id})
 
         return image_file
 
-    def create_image(self, image_file: UploadFile) -> ImageDB:
-        image_path_split = image_file.filename.split(".")
+    def create_image(self, image_data: bytes, image_filename: str) -> ImageDB:
+        image_path_split = image_filename.split(".")
         image_name = ".".join(image_path_split[:-1])
         image_extension = image_path_split[-1]
 
@@ -173,17 +180,17 @@ class ImageCRUD(AppCRUD):
                 image_path = f"{image_name}_{randint(0, 1000000)}"
                 blob = self.container_client.get_blob_client(image_path)
 
-            blob.upload_blob(image_file.file.read())
+            blob.upload_blob(image_data)
 
         else:
             # save image to disk
-            image_path = f"{self.IMAGE_PATH}/{image_file.filename}"
+            image_path = f"{self.IMAGE_PATH}/{image_filename}"
 
             while os.path.exists(image_path):
                 image_path = f"{self.IMAGE_PATH}/{image_name}_{randint(0, 1000000)}.{image_extension}"
 
             with open(image_path, "wb") as buffer:
-                buffer.write(image_file.file.read())
+                buffer.write(image_data)
 
         image_db = ImageDB(
             image_path=image_path,

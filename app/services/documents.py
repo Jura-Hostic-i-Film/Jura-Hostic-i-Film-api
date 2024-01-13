@@ -11,6 +11,9 @@ from app.services.users import UserService
 from app.utils.enums import DocumentTypeEnum, DocumentStatusEnum
 from app.utils.exceptions.document_exceptions import DocumentException
 
+import app.services.audit as audit
+from app.utils.util import COMPATIBLE_STATUSES
+
 
 class DocumentService(AppService):
     def get_all_documents(self, document_type: str, document_status: str) -> list[Type[DocumentDB]]:
@@ -52,8 +55,20 @@ class DocumentService(AppService):
             raise DocumentException.DocumentStatusNotProvided()
 
         document = self.get_document(document_id)
+
+        if new_status not in COMPATIBLE_STATUSES[document.document_status]:
+            raise DocumentException.DocumentStatusNotCompatible({"document_status": document.document_status,
+                                                                 "new_status": new_status})
+
         document.document_status = new_status
         document = DocumentCRUD(self.db).update_document(document)
+        return document
+
+    def approve_document(self, document_id: int) -> Document:
+        document = self.update_document(document_id, DocumentStatusEnum.APPROVED)
+
+        audit.AuditService(self.db).create_audit_for_document(document_id)
+
         return document
 
 

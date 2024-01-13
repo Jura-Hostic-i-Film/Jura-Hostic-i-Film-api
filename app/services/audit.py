@@ -3,12 +3,13 @@ from typing import Type
 from app.models.audit import AuditDB
 from app.schemas.audit import AuditCreate
 from app.services.archives import ArchiveService
-from app.services.documents import DocumentService
 from app.services.main import AppService
-from app.services.users import UserCRUD
-from app.utils.enums import ActionStatus, DocumentStatusEnum
+from app.services.users import UserCRUD, UserService
+from app.utils.enums import ActionStatus, DocumentStatusEnum, RolesEnum
 from app.utils.exceptions.audit_exceptions import AuditException
 from datetime import datetime
+
+import app.services.documents as documents
 
 from app.utils.exceptions.user_exceptions import UserException
 
@@ -30,6 +31,16 @@ class AuditService(AppService):
         return audits
 
     def create_audit_request(self, audit: AuditCreate) -> AuditDB:
+        user = UserService(self.db).get_user_by_id(audit.audit_by)
+
+        if not user:
+            raise UserException.UserNotFound({"user_id": audit.audit_by})
+
+        roles = [RolesEnum(role.name) for role in user.roles]
+
+        if RolesEnum.AUDITOR not in roles:
+            raise UserException.UserNotAuthorized({"user_id": audit.audit_by})
+
         audit_db = AuditCRUD(self.db).create_audit(audit)
 
         return audit_db
@@ -57,9 +68,16 @@ class AuditService(AppService):
 
         return audit
 
-    def audit_document(self, document_id: int) -> AuditDB:
+    def audit_document(self, document_id: int, username: str) -> AuditDB:
         audit = AuditCRUD(self.db).get_audit_by_document_id(document_id)
-        document = DocumentService(self.db).get_document(document_id)
+        document = documents.DocumentService(self.db).get_document(document_id)
+        user = UserService(self.db).get_user_by_id(audit.audited_by)
+
+        if not user:
+            raise UserException.UserNotFound({"user_id": audit.audited_by})
+
+        if user.username != username:
+            raise UserException.UserNotAuthorized({"username": username})
 
         if not audit:
             raise AuditException.DocumentAuditNotFound({"document_id": document_id})
@@ -72,12 +90,36 @@ class AuditService(AppService):
 
         AuditCRUD(self.db).update_audit(audit)
 
-        document.document_status = DocumentStatusEnum.AUDITED
+        documents.DocumentService(self.db).update_document(document_id, DocumentStatusEnum.AUDITED)
 
         # create an archive request for the document
         ArchiveService(self.db).create_archive_for_document(document_id, document.document_type)
 
         return audit
+
+    def create_audit_for_document(self, document_id: int) -> AuditDB:
+        auditors = UserService(self.db).get_users([RolesEnum.AUDITOR])
+
+        if not auditors:
+            raise UserException.NoUsersWithRole({"role": RolesEnum.AUDITOR})
+
+        auditors_with_pending_audits = []
+
+        for auditor in auditors:
+            pending_audits = self.get_pending_audits(auditor.id)
+            if pending_audits:
+                auditors_with_pending_audits.append((auditor, len(pending_audits)))
+            else:
+                auditors_with_pending_audits.append((auditor, 0))
+
+        auditor = min(auditors_with_pending_audits, key=lambda x: x[1])[0]
+
+        audit = AuditCreate(
+            audit_by=auditor.id,
+            document_id=document_id
+        )
+
+        return self.create_audit_request(audit)
 
     def get_audit_status(self, document_id: int) -> ActionStatus:
         audit = AuditCRUD(self.db).get_audit_by_document_id(document_id)

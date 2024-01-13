@@ -18,3 +18,11 @@ class DocumentException:
             status_code = 400
             context = {"detail": "Document status not provided"}
             AppExceptionCase.__init__(self, status_code, context)
+
+    class DocumentStatusNotCompatible(AppExceptionCase):
+        def __init__(self, context: dict):
+            """
+            Document status not compatible
+            """
+            status_code = 400
+            AppExceptionCase.__init__(self, status_code, context)

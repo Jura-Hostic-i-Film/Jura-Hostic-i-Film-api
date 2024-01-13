@@ -51,18 +51,25 @@ class UserException:
             AppExceptionCase.__init__(self, status_code, context)
 
     class InvalidRole(AppExceptionCase):
-        def __int__(self, context: dict):
+        def __init__(self, context: dict):
             """
             Invalid role
             """
             status_code = 401
             AppExceptionCase.__init__(self, status_code, context)
 
-
     class NoUsersWithRole(AppExceptionCase):
-        def __int__(self, context: dict):
+        def __init__(self, context: dict):
             """
             No users with role
             """
             status_code = 404
+            AppExceptionCase.__init__(self, status_code, context)
+
+    class UserNotAuthorized(AppExceptionCase):
+        def __init__(self, context: dict):
+            """
+            User not authorized
+            """
+            status_code = 401
             AppExceptionCase.__init__(self, status_code, context)

@@ -133,11 +133,12 @@ class ArchiveService(AppService):
 
         for accountant in accountants:
             pending_archives = self.get_pending_archives_by_id(accountant.id)
-            accountants_with_pending_archives.append((accountant, len(pending_archives)))
+            if pending_archives:
+                accountants_with_pending_archives.append((accountant, len(pending_archives)))
+            else:
+                accountants_with_pending_archives.append((accountant, 0))
 
-        accountants_with_pending_archives.sort(key=lambda x: x[1])
-
-        accountant = accountants_with_pending_archives[0][0]
+        accountant = min(accountants_with_pending_archives, key=lambda x: x[1])[0]
 
         archiveCreate = ArchiveCreate(
             document_id=document_id,

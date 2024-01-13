@@ -1,4 +1,4 @@
-from typing import BinaryIO
+import os
 
 from fastapi import UploadFile
 
@@ -8,14 +8,15 @@ from app.utils.enums import DocumentTypeEnum, DocumentStatusEnum
 from tests.users.util import admin, director
 
 
-image_file = BinaryIO()
+image_path = os.path.join(os.path.dirname(__file__), 'files', 'test_image.png')
+image_file = open(image_path, 'rb')
 uploaded_image = UploadFile(
     filename="test_image",
     file=image_file,
 )
 imageDB = ImageDB(
     id=1,
-    image_path="test_image",
+    image_path=image_path,
 )
 document1 = Document(
     id=1,

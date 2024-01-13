@@ -1,4 +1,5 @@
 import os
+import re
 from datetime import datetime
 from random import randint
 from typing import Type
@@ -41,15 +42,22 @@ class DocumentService(AppService):
 
         summary = detect_document(image_data)
 
-        rand = randint(1, 3)  # because why not
-        if rand == 1:
-            document_type = DocumentTypeEnum.OFFER
-        elif rand == 2:
-            document_type = DocumentTypeEnum.RECEIPT
-        else:
-            document_type = DocumentTypeEnum.INTERNAL
+        receipt_regex = r"R\d{6}"
+        offer_regex = r"P\d{9}"
+        internal_regex = r"INT\d{4}"
 
-        image_db = ImageCRUD(self.db).create_image(image_data, image_filename)
+        if re.search(receipt_regex, summary):
+            document_type = DocumentTypeEnum.RECEIPT
+
+        elif re.search(offer_regex, summary):
+            document_type = DocumentTypeEnum.OFFER
+
+        elif re.search(internal_regex, summary):
+            document_type = DocumentTypeEnum.INTERNAL
+        else:
+            raise DocumentException.DocumentTypeNotRecognized()
+
+        image_db = ImageService(self.db).create_image(image_data, image_filename)
 
         document = DocumentCRUD(self.db).create_document(image_db, owner.id, document_type, summary, document_status)
         return document

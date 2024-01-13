@@ -52,3 +52,12 @@ class DocumentException:
             status_code = 500
             context = {"detail": "Image upload failed"}
             AppExceptionCase.__init__(self, status_code, context)
+
+    class DocumentTypeNotRecognized(AppExceptionCase):
+        def __init__(self):
+            """
+            Document type not recognized
+            """
+            status_code = 400
+            context = {"detail": "Document type not recognized"}
+            AppExceptionCase.__init__(self, status_code, context)

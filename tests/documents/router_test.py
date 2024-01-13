@@ -5,8 +5,8 @@ import pytest
 from starlette.testclient import TestClient
 
 from app.main import app
-from app.services.documents import DocumentService
-from tests.documents.util import documents, imageDB
+from app.services.documents import DocumentService, ImageService
+from tests.documents.util import documents, uploaded_image
 from tests.users.util import user_jwt, director_jwt
 
 client = TestClient(app)
@@ -81,13 +81,13 @@ def test_get_document():
 
 
 def test_get_image():
-    mock_document_service = Mock(spec=DocumentService)
-    mock_document_service.get_image.return_value = imageDB
+    mock_image_service = Mock(spec=ImageService)
+    mock_image_service.get_image.return_value = uploaded_image
 
-    with patch("app.routers.documents.DocumentService", return_value=mock_document_service):
+    with patch("app.routers.documents.ImageService", return_value=mock_image_service):
         response = client.get("/documents/image/1", headers={"Authorization": f"Bearer {user_jwt}"})
 
-    mock_document_service.get_image.assert_called_once()
+    mock_image_service.get_image.assert_called_once()
     assert response.status_code == 200
     assert response.headers['content-type'] == 'image/jpeg'
     assert response.iter_bytes()

@@ -56,6 +56,9 @@ class DocumentService(AppService):
 
         document = self.get_document(document_id)
 
+        if not document:
+            raise DocumentException.DocumentNotFound({"document_id": document_id})
+
         if new_status not in COMPATIBLE_STATUSES[document.document_status]:
             raise DocumentException.DocumentStatusNotCompatible({"document_status": document.document_status,
                                                                  "new_status": new_status})

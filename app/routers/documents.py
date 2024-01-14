@@ -68,3 +68,15 @@ async def update_document(document_id: int, new_status: DocumentStatusEnum, db: 
                           credentials: JwtAuthorizationCredentials = Security(access_security)) -> Document:
     result = DocumentService(db).update_document(document_id, new_status)
     return result
+
+
+@router.get("/approve/{document_id}")
+@authenticate()
+async def approve_document(document_id: int, approve: bool, db: get_db = Depends(),
+                           credentials: JwtAuthorizationCredentials = Security(access_security)) -> Document:
+    if approve:
+        result = DocumentService(db).approve_document(document_id)
+    else:
+        result = DocumentService(db).update_document(document_id, DocumentStatusEnum.REFUSED)
+
+    return result

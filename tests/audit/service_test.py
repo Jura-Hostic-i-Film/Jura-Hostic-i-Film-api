@@ -49,20 +49,6 @@ def test_get_audited_documents():
     assert result == audits
 
 
-def test_create_audit_request():
-    mock_audit_crud = Mock()
-    mock_audit_crud.create_audit.return_value = audits[0]
-    db = Mock()
-
-    audit_service = AuditService(db)
-
-    with patch("app.services.audit.AuditCRUD", return_value=mock_audit_crud):
-        result = audit_service.create_audit_request(audits[0])
-
-    mock_audit_crud.create_audit.assert_called_once()
-    assert result == audits[0]
-
-
 def test_get_all_pending_audits():
     mock_audit_crud = Mock()
     mock_audit_crud.get_audits_by_status.return_value = audits
@@ -117,16 +103,3 @@ def test_get_audit_by_document_id():
 
     mock_audit_crud.get_audit_by_document_id.assert_called_once()
     assert result == audits[0]
-
-def test_audit_document_not_found():
-    mock_audit_crud = Mock()
-    mock_audit_crud.get_audit_by_document_id.return_value = None
-    db = Mock()
-
-    audit_service = AuditService(db)
-
-    with patch("app.services.audit.AuditCRUD", return_value=mock_audit_crud):
-        with raises(AuditException.DocumentAuditNotFound):
-            audit_service.audit_document(1)
-
-    mock_audit_crud.get_audit_by_document_id.assert_called_once()

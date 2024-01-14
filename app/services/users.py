@@ -85,7 +85,7 @@ class UserService(AppService):
         return user
 
     def get_user_by_id(self, user_id: int) -> User:
-        users = UserCRUD(self.db).get_user_by_id(user_id)
+        return UserCRUD(self.db).get_user_by_id(user_id)
 
 
 class UserCRUD(AppCRUD):
@@ -173,8 +173,6 @@ class UserCRUD(AppCRUD):
         self.db.refresh(user_db)
 
         return True
-
-
 
     def get_user_by_id(self, user_id: int) -> UserDB:
         return self.db.query(UserDB).filter(UserDB.id == user_id).first()

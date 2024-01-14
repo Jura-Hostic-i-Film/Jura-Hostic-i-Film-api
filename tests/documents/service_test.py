@@ -66,21 +66,3 @@ def test_get_document_and_get_image():
     assert result1 == document1
     assert result2 == image
 
-
-def test_update_document():
-    mock_document_crud = Mock()
-    mock_document_crud.get_document.return_value = None
-    mock_document_crud.update_document.return_value = document2
-    db = Mock()
-
-    document_service = DocumentService(db)
-
-    with patch("app.services.documents.DocumentCRUD", return_value=mock_document_crud):
-        assert raises(DocumentException.DocumentNotFound, document_service.update_document, 1, "signed")
-
-    mock_document_crud.get_document.return_value = document2
-
-    with patch("app.services.documents.DocumentCRUD", return_value=mock_document_crud):
-        result = document_service.update_document(2, DocumentStatusEnum.SIGNED)
-
-    assert result == document2

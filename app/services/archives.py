@@ -5,7 +5,7 @@ from typing import Type, List
 from datetime import datetime
 
 from app.services.users import UserService
-from app.utils.enums import ActionStatus
+from app.utils.enums import ActionStatus, DocumentTypeEnum, RolesEnum
 from app.utils.exceptions.archive_exceptions import ArchiveException
 from app.utils.exceptions.user_exceptions import UserException
 
@@ -39,10 +39,10 @@ class ArchiveCRUD(AppService):
         self.db.refresh(archiveDB)
         return archiveDB
 
-    def get_archived_by_document_id(self, document_id: int) -> Type[ArchiveDB]:
+    def get_archived_by_document_id(self, document_id: int) -> ArchiveDB:
         return self.db.query(ArchiveDB).filter(document_id == ArchiveDB.document_id).first()
 
-    def update_archive(self, archive: ArchiveDB) -> Archive:
+    def update_archive(self, archive: ArchiveDB) -> ArchiveDB:
         self.db.commit()
         self.db.refresh(archive)
         return archive
@@ -98,7 +98,7 @@ class ArchiveService(AppService):
         archive = ArchiveCRUD(self.db).get_archived_by_document_id(document_id)
         if not archive:
             raise ArchiveException.DocumentArchiveNotFound({"document_id": document_id})
-        return archive.status
+        return ActionStatus(archive.status)
 
     def create_archive_request(self, archive_request: ArchiveCreate) -> ArchiveDB:
         return ArchiveCRUD(self.db).create_archive(archive_request)
@@ -112,3 +112,39 @@ class ArchiveService(AppService):
         archive.archived_at = datetime.now()
         archive = ArchiveCRUD(self.db).update_archive(archive)
         return archive
+
+    def create_archive_for_document(self, document_id: int, document_type: DocumentTypeEnum) -> ArchiveDB:
+        if document_type == DocumentTypeEnum.INTERNAL:
+            accountant_type = RolesEnum.ACCOUNTANT_INTERNAL
+        elif document_type == DocumentTypeEnum.OFFER:
+            accountant_type = RolesEnum.ACCOUNTANT_OFFER
+        elif document_type == DocumentTypeEnum.RECEIPT:
+            accountant_type = RolesEnum.ACCOUNTANT_RECEIPT
+        else:
+            raise ArchiveException.DocumentTypeNotProvided({"document_type": document_type})
+
+        accountants = UserService(self.db).get_users([accountant_type])
+
+        if not accountants:
+            raise UserException.NoUsersWithRole({"role": accountant_type})
+
+        # Find accountant with the least amount of pending archives
+        accountants_with_pending_archives = []
+
+        for accountant in accountants:
+            pending_archives = self.get_pending_archives_by_id(accountant.id)
+            if pending_archives:
+                accountants_with_pending_archives.append((accountant, len(pending_archives)))
+            else:
+                accountants_with_pending_archives.append((accountant, 0))
+
+        accountant = min(accountants_with_pending_archives, key=lambda x: x[1])[0]
+
+        archiveCreate = ArchiveCreate(
+            document_id=document_id,
+            archive_by=accountant.id
+        )
+
+        return self.create_archive_request(archiveCreate)
+
+

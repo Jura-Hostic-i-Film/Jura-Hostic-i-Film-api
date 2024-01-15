@@ -1,11 +1,12 @@
 from app.models.archives import ArchiveDB
 from app.schemas.archives import Archive, ArchiveCreate
+from app.services.documents import DocumentService
 from app.services.main import AppService
 from typing import Type
 from datetime import datetime
 
 from app.services.users import UserService
-from app.utils.enums import DocumentTypeEnum, RolesEnum, ArchiveStatus
+from app.utils.enums import DocumentTypeEnum, RolesEnum, ArchiveStatus, DocumentStatusEnum
 from app.utils.exceptions.archive_exceptions import ArchiveException
 from app.utils.exceptions.user_exceptions import UserException
 
@@ -131,6 +132,12 @@ class ArchiveService(AppService):
             if archive.status != ArchiveStatus.PENDING and archive.status != ArchiveStatus.SIGNED_PENDING:
                 raise ArchiveException.IllegalArchiveStatus({"status": archive.status})
             archive.archive_at = datetime.now()
+
+            if archive.status == ArchiveStatus.SIGNED_PENDING:
+                DocumentService(self.db).update_document(document_id, DocumentStatusEnum.SIGNED_AND_ARCHIVED)
+            else:
+                DocumentService(self.db).update_document(document_id, DocumentStatusEnum.ARCHIVED)
+
         elif status == ArchiveStatus.AWAITING_SIGNATURE:
             if archive.status != ArchiveStatus.PENDING:
                 raise ArchiveException.IllegalArchiveStatus({"status": archive.status})

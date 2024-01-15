@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 
+from app.services.documents import DocumentService
 from app.services.users import UserService
 from app.utils.enums import ActionStatus, ArchiveStatus
 from app.services.archives import ArchiveService
@@ -42,13 +43,18 @@ def test_archive_document():
 
     mock_user_service = Mock(spec=UserService)
     mock_user_service.get_user.return_value = admin
+
+    mock_document_service = Mock(spec=DocumentService)
+    mock_document_service.update_document.return_value = None
+
     db = Mock()
 
     archive_service = ArchiveService(db)
 
     with patch("app.services.archives.ArchiveCRUD", return_value=mock_archive_crud):
         with patch("app.services.archives.UserService", return_value=mock_user_service):
-            result = archive_service.archive_document(1, ArchiveStatus.DONE, "test")
+            with patch("app.services.archives.DocumentService", return_value=mock_document_service):
+                result = archive_service.archive_document(1, ArchiveStatus.DONE, "test")
 
     mock_archive_crud.get_archived_by_document_id.assert_called_once_with(1)
     mock_archive_crud.update_archive.assert_called_once()

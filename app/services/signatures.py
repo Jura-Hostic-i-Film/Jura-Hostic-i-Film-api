@@ -148,30 +148,30 @@ class SignatureService(AppService):
 
         roles = [RolesEnum(role.name) for role in user.roles]
 
-        if (RolesEnum.ADMIN not in roles) or (RolesEnum.DIRECTOR not in roles):
+        if (RolesEnum.ADMIN not in roles) and (RolesEnum.DIRECTOR not in roles):
             raise UserException.UserNotAuthorized({"user_id": signature.sign_by})
 
         return SignatureCRUD(self.db).create_signature(signature)
 
     def create_signature_for_document(self, document_id: int) -> SignatureDB:
-        signs = UserService(self.db).get_users([RolesEnum.ADMIN, RolesEnum.DIRECTOR])
+        directors = UserService(self.db).get_users([RolesEnum.ADMIN])
 
-        if not signs:
-            raise UserException.NoUsersWithRole({"role": RolesEnum.ADMIN | RolesEnum.DIRECTOR})
+        if not directors:
+            raise UserException.NoUsersWithRole({"role": RolesEnum.DIRECTOR})
 
         signs_with_pending_signatures = []
 
-        for sign in signs:
-            pending_signatures = self.get_pending_signatures_by_id(sign.id)
+        for director in directors:
+            pending_signatures = self.get_pending_signatures_by_id(director.id)
             if pending_signatures:
-                signs_with_pending_signatures.append((sign, len(pending_signatures)))
+                signs_with_pending_signatures.append((director, len(pending_signatures)))
             else:
-                signs_with_pending_signatures.append((sign, 0))
+                signs_with_pending_signatures.append((director, 0))
 
-        sign = min(signs_with_pending_signatures, key=lambda x: x[1])[0]
+        director = min(signs_with_pending_signatures, key=lambda x: x[1])[0]
 
         signature = SignatureCreate(
-            sign_by=sign.id,
+            sign_by=director.id,
             document_id=document_id
         )
 

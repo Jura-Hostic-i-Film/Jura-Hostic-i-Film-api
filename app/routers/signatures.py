@@ -6,7 +6,6 @@ from app.services.signatures import SignatureService
 from app.utils.enums import RolesEnum, ActionStatus
 from fastapi import APIRouter, Depends, Security
 from fastapi_jwt import JwtAuthorizationCredentials
-from pydantic import BaseModel
 
 router = APIRouter(
     prefix="/signatures",
@@ -63,8 +62,29 @@ async def me(status: ActionStatus | None = None, db: get_db = Depends(),
     return result
 
 
+@router.get("/me/pending")
+@authenticate()
+async def me_pending(db: get_db = Depends(),
+             credentials: JwtAuthorizationCredentials = Security(access_security)) -> list[Signature]:
+    username = credentials["username"]
+    result = SignatureService(db).get_pending_signatures_by_username(username)
+
+    return result
+
+
+@router.get("/me/pending/count")
+@authenticate()
+async def me_pending_count(db: get_db = Depends(),
+             credentials: JwtAuthorizationCredentials = Security(access_security)) -> int:
+    username = credentials["username"]
+    result = SignatureService(db).get_signed_documents_by_username(username)
+
+    return len(result)
+
+
 @router.post("/{document_id}")
 @authenticate([RolesEnum.ADMIN, RolesEnum.DIRECTOR])
 async def sign_document(document_id: int, db: get_db = Depends(),
              credentials: JwtAuthorizationCredentials = Security(access_security)) -> Signature:
-    return SignatureService(db).sign_document(document_id)
+    username = credentials["username"]
+    return SignatureService(db).sign_document(document_id, username)

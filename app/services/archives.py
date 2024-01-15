@@ -147,4 +147,6 @@ class ArchiveService(AppService):
 
         return self.create_archive_request(archiveCreate)
 
+    def update_archive_request_after_signing(self, document_id: int) -> ArchiveDB:
+        pass
 

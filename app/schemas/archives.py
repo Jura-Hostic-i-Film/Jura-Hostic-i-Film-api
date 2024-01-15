@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 
-from app.utils.enums import ActionStatus
+from app.utils.enums import ArchiveStatus
 from app.schemas.users import User
 from app.schemas.documents import Document
 
@@ -10,7 +10,7 @@ class Archive(BaseModel):
     document: Document
     archived: User
     archive_number: int
-    status: ActionStatus
+    status: ArchiveStatus
     archive_at: datetime | None = None
 
     class Config:

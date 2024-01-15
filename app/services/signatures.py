@@ -1,6 +1,4 @@
-from app.schemas.signatures import SignatureCreate, Signature
-from app.services.archives import ArchiveService
-from app.services.documents import DocumentService
+from app.schemas.signatures import SignatureCreate
 from app.services.main import AppService
 from typing import Type
 from app.models.signatures import SignatureDB
@@ -8,7 +6,9 @@ from app.services.users import UserService
 from app.utils.enums import ActionStatus, DocumentStatusEnum, RolesEnum
 from datetime import datetime
 from app.schemas.signatures import Signature
+
 import app.services.documents as documents
+import app.services.archives as archives
 
 from app.utils.exceptions.signature_exceptions import SignatureException
 from app.utils.exceptions.user_exceptions import UserException
@@ -115,7 +115,7 @@ class SignatureService(AppService):
 
     def sign_document(self, document_id: int, username: str) -> Signature:
         signature = SignatureCRUD(self.db).get_signed_by_document_id(document_id)
-        document = DocumentService(self.db).get_document(document_id)
+        document = documents.DocumentService(self.db).get_document(document_id)
         user = UserService(self.db).get_user_by_id(signature.sign_by)
 
         if not user:
@@ -136,7 +136,7 @@ class SignatureService(AppService):
         SignatureCRUD(self.db).update_signature(signature)
         documents.DocumentService(self.db).update_document(document_id, DocumentStatusEnum.SIGNED)
 
-        ArchiveService(self.db).create_archive_for_document(document_id, document.document_type)
+        archives.ArchiveService(self.db).update_archive_request_after_signing(document_id)
 
         return signature
 
@@ -154,7 +154,7 @@ class SignatureService(AppService):
         return SignatureCRUD(self.db).create_signature(signature)
 
     def create_signature_for_document(self, document_id: int) -> SignatureDB:
-        directors = UserService(self.db).get_users([RolesEnum.ADMIN])
+        directors = UserService(self.db).get_users([RolesEnum.DIRECTOR])
 
         if not directors:
             raise UserException.NoUsersWithRole({"role": RolesEnum.DIRECTOR})

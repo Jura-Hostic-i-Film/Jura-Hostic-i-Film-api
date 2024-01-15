@@ -16,3 +16,11 @@ class SignatureException:
             """
             status_code = 409
             AppExceptionCase.__init__(self, status_code, context)
+
+    class DocumentAlreadySigned(AppExceptionCase):
+        def __init__(self, context: dict):
+            """
+            Document already signed
+            """
+            status_code = 409
+            AppExceptionCase.__init__(self, status_code, context)

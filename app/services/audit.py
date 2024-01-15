@@ -38,7 +38,7 @@ class AuditService(AppService):
 
         roles = [RolesEnum(role.name) for role in user.roles]
 
-        if RolesEnum.AUDITOR not in roles:
+        if RolesEnum.AUDITOR not in roles and RolesEnum.ADMIN not in roles:
             raise UserException.UserNotAuthorized({"user_id": audit.audit_by})
 
         audit_db = AuditCRUD(self.db).create_audit(audit)

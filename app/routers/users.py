@@ -5,8 +5,10 @@ from app.config.database import get_db
 from app.config.jwt import access_security
 from app.decorators.authenticate import authenticate
 from app.schemas.users import UserLogin, UserCreate, User, AccessToken, NewPassword, UserUpdate
-from app.services.users import UserService
 from app.utils.enums import RolesEnum
+
+import app.services.statistics as statistics
+from app.services.users import UserService
 
 router = APIRouter(
     prefix="/users",
@@ -18,7 +20,7 @@ router = APIRouter(
 @router.get("/")
 @authenticate([RolesEnum.ADMIN, RolesEnum.DIRECTOR])
 async def get_users(db: get_db = Depends(), roles: list[RolesEnum] | None = None,
-                        credentials: JwtAuthorizationCredentials = Security(access_security)) -> list[User]:
+                    credentials: JwtAuthorizationCredentials = Security(access_security)) -> list[User]:
     result = UserService(db).get_users(roles)
     return result
 
@@ -87,4 +89,12 @@ async def update_user(username: str, user: UserUpdate, db: get_db = Depends(),
 async def update_user_password(username: str, password: NewPassword, db: get_db = Depends(),
                                credentials: JwtAuthorizationCredentials = Security(access_security)) -> bool:
     result = UserService(db).update_user_password(username, password.password)
+    return result
+
+
+@router.get("/statistics/{username}")
+@authenticate([RolesEnum.ADMIN, RolesEnum.DIRECTOR])
+async def get_user_statistics(username: str, db: get_db = Depends(),
+                              credentials: JwtAuthorizationCredentials = Security(access_security)) -> dict:
+    result = statistics.StatisticsService(db).get_user_statistics(username)
     return result

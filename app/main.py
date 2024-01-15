@@ -1,7 +1,12 @@
 from fastapi import FastAPI
-from app.routers import users, documents, signatures, audit, archives
 from app.utils.exceptions.app_exceptions import AppExceptionCase, app_exception_handler
 from app.utils.startup import create_tables, add_roles
+
+import app.routers.users as users
+import app.routers.documents as documents
+import app.routers.signatures as signatures
+import app.routers.audit as audit
+import app.routers.archives as archives
 
 app = FastAPI()
 

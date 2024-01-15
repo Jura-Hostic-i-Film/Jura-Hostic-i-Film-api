@@ -1,9 +1,6 @@
 from unittest.mock import Mock, patch
 
-from _pytest.python_api import raises
-
 from app.services.audit import AuditService
-from app.utils.exceptions.audit_exceptions import AuditException
 from tests.audit.util import audits
 
 

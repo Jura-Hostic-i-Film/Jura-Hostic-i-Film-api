@@ -2,7 +2,6 @@ from typing import Type
 
 from app.models.audit import AuditDB
 from app.schemas.audit import AuditCreate
-from app.services.archives import ArchiveService
 from app.services.main import AppService
 from app.services.users import UserCRUD, UserService
 from app.utils.enums import ActionStatus, DocumentStatusEnum, RolesEnum
@@ -10,6 +9,7 @@ from app.utils.exceptions.audit_exceptions import AuditException
 from datetime import datetime
 
 import app.services.documents as documents
+import app.services.archives as archives
 
 from app.utils.exceptions.user_exceptions import UserException
 
@@ -93,7 +93,7 @@ class AuditService(AppService):
         documents.DocumentService(self.db).update_document(document_id, DocumentStatusEnum.AUDITED)
 
         # create an archive request for the document
-        ArchiveService(self.db).create_archive_for_document(document_id, document.document_type)
+        archives.ArchiveService(self.db).create_archive_for_document(document_id, document.document_type)
 
         return audit
 

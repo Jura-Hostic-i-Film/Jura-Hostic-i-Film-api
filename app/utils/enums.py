@@ -10,9 +10,17 @@ class RolesEnum(str, Enum):
     ACCOUNTANT_INTERNAL = 'accountant_internal'
     EMPLOYEE = 'employee'
 
+
 class ActionStatus(str, Enum):
     PENDING = 'pending'
     DONE = 'done'
+
+
+class ArchiveStatus(str, Enum):
+    PENDING = 'pending'
+    SIGNED_PENDING = 'signed_pending'
+    DONE = 'done'
+    AWAITING_SIGNATURE = 'awaiting_signature'
 
 
 class DocumentTypeEnum(str, Enum):

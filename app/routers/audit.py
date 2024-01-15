@@ -57,20 +57,10 @@ async def me(status: ActionStatus | None = None, db: get_db = Depends(),
 
 @router.get("/me/pending")
 @authenticate()
-async def me_pending(db: get_db = Depends(),
-                     credentials: JwtAuthorizationCredentials = Security(access_security)) -> list[Audit]:
-    username = credentials["username"]
-    result = AuditService(db).get_pending_audits_by_username(username)
-
-    return result
-
-
-@router.get("/me/pending/count")
-@authenticate()
 async def me_pending_count(db: get_db = Depends(),
                            credentials: JwtAuthorizationCredentials = Security(access_security)) -> int:
     username = credentials["username"]
-    result = AuditService(db).get_audited_documents_by_username(username)
+    result = AuditService(db).get_pending_audits_by_username(username)
 
     return len(result)
 
@@ -87,5 +77,5 @@ async def create_audit_request(audit: AuditCreate, db: get_db = Depends(),
 @authenticate([RolesEnum.ADMIN, RolesEnum.AUDITOR])
 async def audit_document(document_id: int, db: get_db = Depends(),
                          credentials: JwtAuthorizationCredentials = Security(access_security)) -> Audit:
-    result = AuditService(db).audit_document(document_id)
+    result = AuditService(db).audit_document(document_id, credentials["username"])
     return result

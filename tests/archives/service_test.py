@@ -1,9 +1,10 @@
 from unittest.mock import Mock, patch
-from app.utils.enums import ActionStatus
+
+from app.services.users import UserService
+from app.utils.enums import ActionStatus, ArchiveStatus
 from app.services.archives import ArchiveService
 from tests.archives.util import archive1, archive2, archives, archive_create
-from _pytest.python_api import raises
-from pydantic import BaseModel
+from tests.users.util import admin
 
 
 def test_get_all_archives():
@@ -28,23 +29,9 @@ def test_get_all_pending_archives():
     archive_service = ArchiveService(db)
 
     with patch("app.services.archives.ArchiveCRUD", return_value=mock_archive_crud):
-        result = archive_service.get_all_pending_archives()
+        result = archive_service.get_archives_by_status(ArchiveStatus.PENDING)
 
     mock_archive_crud.get_archives_by_status.assert_called_once_with(ActionStatus.PENDING)
-    assert result == archives
-
-
-def test_get_all_archived_documents():
-    mock_archive_crud = Mock()
-    mock_archive_crud.get_archives_by_status.return_value = archives
-    db = Mock()
-
-    archive_service = ArchiveService(db)
-
-    with patch("app.services.archives.ArchiveCRUD", return_value=mock_archive_crud):
-        result = archive_service.get_all_archived_documents()
-
-    mock_archive_crud.get_archives_by_status.assert_called_once_with(ActionStatus.DONE)
     assert result == archives
 
 
@@ -52,12 +39,16 @@ def test_archive_document():
     mock_archive_crud = Mock()
     mock_archive_crud.get_archived_by_document_id.return_value = archive1
     mock_archive_crud.update_archive.return_value = archive1
+
+    mock_user_service = Mock(spec=UserService)
+    mock_user_service.get_user.return_value = admin
     db = Mock()
 
     archive_service = ArchiveService(db)
 
     with patch("app.services.archives.ArchiveCRUD", return_value=mock_archive_crud):
-        result = archive_service.archive_document(1)
+        with patch("app.services.archives.UserService", return_value=mock_user_service):
+            result = archive_service.archive_document(1, ArchiveStatus.DONE, "test")
 
     mock_archive_crud.get_archived_by_document_id.assert_called_once_with(1)
     mock_archive_crud.update_archive.assert_called_once()

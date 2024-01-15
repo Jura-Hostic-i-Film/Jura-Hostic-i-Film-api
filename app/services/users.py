@@ -176,3 +176,4 @@ class UserCRUD(AppCRUD):
 
     def get_user_by_id(self, user_id: int) -> UserDB:
         return self.db.query(UserDB).filter(UserDB.id == user_id).first()
+

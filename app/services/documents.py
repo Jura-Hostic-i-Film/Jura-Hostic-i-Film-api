@@ -22,7 +22,10 @@ class DocumentService(AppService):
 
     def get_documents(self, owner_username: str) -> list[Type[DocumentDB]]:
         owner = UserService(self.db).get_user(owner_username)
-        documents = DocumentCRUD(self.db).get_documents(owner.id)
+        return self.get_documents_by_user_id(owner.id)
+
+    def get_documents_by_user_id(self, owner_id: int) -> list[Type[DocumentDB]]:
+        documents = DocumentCRUD(self.db).get_documents(owner_id)
         return documents
 
     def create_document(self, image: UploadFile, owner_username: str) -> Document:

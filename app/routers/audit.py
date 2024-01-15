@@ -79,3 +79,11 @@ async def audit_document(document_id: int, db: get_db = Depends(),
                          credentials: JwtAuthorizationCredentials = Security(access_security)) -> Audit:
     result = AuditService(db).audit_document(document_id, credentials["username"])
     return result
+
+
+@router.get("/{document_id}")
+@authenticate()
+async def get_audit(document_id: int, db: get_db = Depends(),
+                    credentials: JwtAuthorizationCredentials = Security(access_security)) -> Audit:
+    result = AuditService(db).get_audit_by_document_id(document_id)
+    return result

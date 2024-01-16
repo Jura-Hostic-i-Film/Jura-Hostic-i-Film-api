@@ -33,17 +33,17 @@ class StatisticsService(AppService):
 
             if RolesEnum.ACCOUNTANT_OFFER in roles:
                 offers = [document for document in archived_documents if
-                          document.document.type == DocumentTypeEnum.OFFER]
+                          document.document.document_type == DocumentTypeEnum.OFFER]
                 statistics["archived_offers"] = len(offers)
 
             if RolesEnum.ACCOUNTANT_RECEIPT in roles:
                 receipts = [document for document in archived_documents if
-                            document.document.type == DocumentTypeEnum.RECEIPT]
+                            document.document.document_type == DocumentTypeEnum.RECEIPT]
                 statistics["archived_receipts"] = len(receipts)
 
             if RolesEnum.ACCOUNTANT_INTERNAL in roles:
                 internals = [document for document in archived_documents if
-                             document.document.type == DocumentTypeEnum.INTERNAL]
+                             document.document.document_type == DocumentTypeEnum.INTERNAL]
                 statistics["archived_internals"] = len(internals)
 
         return statistics

@@ -8,7 +8,7 @@ from app.config.database import get_db
 from app.config.jwt import access_security
 from app.decorators.authenticate import authenticate
 from app.schemas.documents import Document
-from app.services.documents import DocumentService
+from app.services.documents import DocumentService, ImageService
 from app.utils.enums import RolesEnum, DocumentTypeEnum, DocumentStatusEnum
 
 router = APIRouter(
@@ -58,15 +58,16 @@ async def get_document(document_id: int, db: get_db = Depends(),
 @authenticate()
 async def get_image(image_id: int, db: get_db = Depends(),
                     credentials: JwtAuthorizationCredentials = Security(access_security)):
-    image = DocumentService(db).get_image(image_id)
-    return StreamingResponse(io.BytesIO(image.image_file), media_type="image/jpeg")
+    image = ImageService(db).get_image(image_id)
+
+    return StreamingResponse(io.BytesIO(image.file.read()), media_type="image/jpeg")
 
 
 @router.post("/update/{document_id}")
 @authenticate()
 async def update_document(document_id: int, new_status: DocumentStatusEnum, db: get_db = Depends(),
                           credentials: JwtAuthorizationCredentials = Security(access_security)) -> Document:
-    result = DocumentService(db).update_document(document_id, new_status)
+    result = DocumentService(db).update_document(document_id, new_status, None)
     return result
 
 
@@ -74,9 +75,12 @@ async def update_document(document_id: int, new_status: DocumentStatusEnum, db: 
 @authenticate()
 async def approve_document(document_id: int, approve: bool, db: get_db = Depends(),
                            credentials: JwtAuthorizationCredentials = Security(access_security)) -> Document:
+    username = credentials["username"]
+    roles = credentials["roles"]
+
     if approve:
-        result = DocumentService(db).approve_document(document_id)
+        result = DocumentService(db).approve_document(document_id, username, roles)
     else:
-        result = DocumentService(db).update_document(document_id, DocumentStatusEnum.REFUSED)
+        result = DocumentService(db).update_document(document_id, DocumentStatusEnum.REFUSED, None)
 
     return result

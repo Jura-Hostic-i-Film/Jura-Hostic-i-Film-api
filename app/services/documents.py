@@ -42,9 +42,7 @@ class DocumentService(AppService):
         image_filename = image.filename
 
         try:
-            #summary = detect_document(image_data)
-            possible_summaries = ["R123456 text", "P123456789 text", "INT1234 text"]
-            summary = possible_summaries[randint(0, 2)]
+            summary = detect_document(image_data)
         except Exception as e:
             raise DocumentException.DocumentNotDetected()
 

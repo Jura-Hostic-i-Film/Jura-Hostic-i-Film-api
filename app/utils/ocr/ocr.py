@@ -1,3 +1,5 @@
+from random import randint
+
 import cv2
 import numpy as np
 from easyocr import easyocr
@@ -135,6 +137,10 @@ def extract_text_from_image(image):
 
 
 def detect_document(image: bytes):
+    possible_summaries = ["R123456 text", "P123456789 text", "INT1234 text"]
+    summary = possible_summaries[randint(0, 2)]
+    return summary
+
     page_extractor = PageExtractor(
         preprocessors=[
             Resizer(height=1280, output_process=False),

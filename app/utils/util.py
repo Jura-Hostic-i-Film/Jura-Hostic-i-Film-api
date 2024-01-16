@@ -1,7 +1,7 @@
 from app.utils.enums import DocumentStatusEnum
 
 COMPATIBLE_STATUSES = {
-    DocumentStatusEnum.SCANNED: [DocumentStatusEnum.APPROVED, DocumentStatusEnum.REFUSED],
+    DocumentStatusEnum.SCANNED: [DocumentStatusEnum.APPROVED, DocumentStatusEnum.REFUSED, DocumentStatusEnum.AUDITED],
     DocumentStatusEnum.APPROVED: [DocumentStatusEnum.AUDITED],
     DocumentStatusEnum.REFUSED: [],
     DocumentStatusEnum.AUDITED: [DocumentStatusEnum.SIGNED, DocumentStatusEnum.ARCHIVED],

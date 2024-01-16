@@ -134,9 +134,9 @@ class ArchiveService(AppService):
             archive.archive_at = datetime.now()
 
             if archive.status == ArchiveStatus.SIGNED_PENDING:
-                DocumentService(self.db).update_document(document_id, DocumentStatusEnum.SIGNED_AND_ARCHIVED)
+                DocumentService(self.db).update_document(document_id, DocumentStatusEnum.SIGNED_AND_ARCHIVED, None)
             else:
-                DocumentService(self.db).update_document(document_id, DocumentStatusEnum.ARCHIVED)
+                DocumentService(self.db).update_document(document_id, DocumentStatusEnum.ARCHIVED, None)
 
         elif status == ArchiveStatus.AWAITING_SIGNATURE:
             if archive.status != ArchiveStatus.PENDING:

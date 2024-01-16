@@ -1,7 +1,7 @@
 from typing import Type
 
 from app.models.audit import AuditDB
-from app.schemas.audit import AuditCreate
+from app.schemas.audit import AuditCreate, DocumentSummary
 from app.services.main import AppService
 from app.services.users import UserCRUD, UserService
 from app.utils.enums import ActionStatus, DocumentStatusEnum, RolesEnum
@@ -68,9 +68,18 @@ class AuditService(AppService):
 
         return audit
 
-    def audit_document(self, document_id: int, username: str) -> AuditDB:
-        audit = AuditCRUD(self.db).get_audit_by_document_id(document_id)
+    def audit_document(self, document_id: int, username: str, document_summary: DocumentSummary | None) -> AuditDB:
         document = documents.DocumentService(self.db).get_document(document_id)
+
+        if document.owner.username == username:
+            audit_create = AuditCreate(
+                audit_by=document.owner.id,
+                document_id=document_id
+            )
+            audit = self.create_audit_request(audit_create)
+        else:
+            audit = AuditCRUD(self.db).get_audit_by_document_id(document_id)
+
         user = UserService(self.db).get_user_by_id(audit.audited_by)
 
         if not user:
@@ -90,7 +99,7 @@ class AuditService(AppService):
 
         AuditCRUD(self.db).update_audit(audit)
 
-        documents.DocumentService(self.db).update_document(document_id, DocumentStatusEnum.AUDITED)
+        documents.DocumentService(self.db).update_document(document_id, DocumentStatusEnum.AUDITED, document_summary)
 
         # create an archive request for the document
         archives.ArchiveService(self.db).create_archive_for_document(document_id, document.document_type)

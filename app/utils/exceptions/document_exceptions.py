@@ -61,3 +61,11 @@ class DocumentException:
             status_code = 400
             context = {"detail": "Document type not recognized"}
             AppExceptionCase.__init__(self, status_code, context)
+
+    class DocumentNotOwnedByUser(AppExceptionCase):
+        def __init__(self, context: dict):
+            """
+            Document not owned by user
+            """
+            status_code = 403
+            AppExceptionCase.__init__(self, status_code, context)

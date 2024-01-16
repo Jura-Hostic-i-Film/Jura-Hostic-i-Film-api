@@ -134,7 +134,7 @@ class SignatureService(AppService):
         signature.signed_at = datetime.now()
 
         SignatureCRUD(self.db).update_signature(signature)
-        documents.DocumentService(self.db).update_document(document_id, DocumentStatusEnum.SIGNED)
+        documents.DocumentService(self.db).update_document(document_id, DocumentStatusEnum.SIGNED, None)
 
         archives.ArchiveService(self.db).update_archive_request_after_signing(document_id)
 

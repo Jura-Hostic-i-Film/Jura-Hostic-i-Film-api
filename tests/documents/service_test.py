@@ -37,7 +37,7 @@ def test_get_documents():
     assert result == documents
 
 
-@patch("app.services.documents.detect_document", return_value="summary")
+@patch("app.services.documents.detect_document", return_value="R123456 text")
 def test_create_document(detect_document):
     mock_document_crud = Mock()
     mock_document_crud.create_document.return_value = document1

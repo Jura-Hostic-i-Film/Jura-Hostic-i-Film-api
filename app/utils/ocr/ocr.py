@@ -6,6 +6,7 @@ from app.utils.exceptions.document_exceptions import DocumentException
 from app.utils.ocr.processors import Resizer, FastDenoiser, OtsuThresholder
 from app.utils.ocr.hough_line_corner_detector import HoughLineCornerDetector
 
+
 class PageExtractor:
     def __init__(self, preprocessors, corner_detector, output_process=False):
         assert isinstance(preprocessors, list), "List of processors expected"
@@ -40,7 +41,10 @@ class PageExtractor:
         (tl, tr, br, bl) = rect
 
         area = (tl[0] - br[0]) * (tl[1] - br[1])
-        if area < 1350000:
+
+        area_threshold = self._image.shape[0] * self._image.shape[1] * 0.2
+
+        if area < area_threshold:
             raise DocumentException.DocumentNotDetected()
 
         # compute the width of the new image, which will be the
@@ -133,22 +137,23 @@ def extract_text_from_image(image):
 def detect_document(image: bytes):
     page_extractor = PageExtractor(
         preprocessors=[
-            Resizer(height=1280, output_process=True),
-            FastDenoiser(strength=9, output_process=True),
-            OtsuThresholder(output_process=True)
+            Resizer(height=1280, output_process=False),
+            FastDenoiser(strength=9, output_process=False),
+            OtsuThresholder(output_process=False)
         ],
         corner_detector=HoughLineCornerDetector(
             rho_acc=1,
             theta_acc=180,
             thresh=100,
-            output_process=True
-        )
+            output_process=False
+        ),
     )
 
     extracted = page_extractor(image)
     text = extract_text_from_image(extracted)
 
     return text
+
 
 if __name__ == "__main__":
     import argparse

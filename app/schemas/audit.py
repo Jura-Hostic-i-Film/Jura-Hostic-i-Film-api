@@ -32,3 +32,7 @@ class Audit(BaseModel):
 class AuditCreate(BaseModel):
     audit_by: int
     document_id: int
+
+
+class DocumentSummary(BaseModel):
+    summary: str

@@ -9,10 +9,11 @@ from fastapi import UploadFile, File
 from app.config.base import settings
 from app.config.database import IMAGE_STORAGE_CONNECTION_STRING
 from app.models.documents import DocumentDB, ImageDB
+from app.schemas.audit import DocumentSummary
 from app.schemas.documents import Document
 from app.services.main import AppService, AppCRUD
 from app.services.users import UserService
-from app.utils.enums import DocumentTypeEnum, DocumentStatusEnum
+from app.utils.enums import DocumentTypeEnum, DocumentStatusEnum, RolesEnum
 from app.utils.exceptions.document_exceptions import DocumentException
 from app.utils.ocr.ocr import detect_document
 
@@ -40,11 +41,14 @@ class DocumentService(AppService):
         image_data = image.file.read()
         image_filename = image.filename
 
-        summary = detect_document(image_data)
+        try:
+            summary = detect_document(image_data)
+        except Exception as e:
+            raise DocumentException.DocumentNotDetected()
 
-        receipt_regex = r"R\d{6}"
-        offer_regex = r"P\d{9}"
-        internal_regex = r"INT\d{4}"
+        receipt_regex = r"\bR\d{6}\b"
+        offer_regex = r"\bP\d{9}\b"
+        internal_regex = r"\bINT\d{4}\b"
 
         if re.search(receipt_regex, summary):
             document_type = DocumentTypeEnum.RECEIPT
@@ -54,6 +58,7 @@ class DocumentService(AppService):
 
         elif re.search(internal_regex, summary):
             document_type = DocumentTypeEnum.INTERNAL
+
         else:
             raise DocumentException.DocumentTypeNotRecognized()
 
@@ -68,7 +73,7 @@ class DocumentService(AppService):
             raise DocumentException.DocumentNotFound({"document_id": document_id})
         return document
 
-    def update_document(self, document_id: int, new_status: DocumentStatusEnum) -> Document:
+    def update_document(self, document_id: int, new_status: DocumentStatusEnum, document_summary: DocumentSummary | None) -> Document:
         if new_status is None:
             raise DocumentException.DocumentStatusNotProvided()
 
@@ -82,13 +87,28 @@ class DocumentService(AppService):
                                                                  "new_status": new_status})
 
         document.document_status = new_status
+
+        if document_summary is not None:
+            document.summary = document_summary.summary
+
         document = DocumentCRUD(self.db).update_document(document)
         return document
 
-    def approve_document(self, document_id: int) -> Document:
-        document = self.update_document(document_id, DocumentStatusEnum.APPROVED)
+    def approve_document(self, document_id: int, username: str, roles: list[RolesEnum]) -> Document:
+        document = self.get_document(document_id)
 
-        audit.AuditService(self.db).create_audit_for_document(document_id)
+        if not document:
+            raise DocumentException.DocumentNotFound({"document_id": document_id})
+
+        if document.owner.username != username:
+            raise DocumentException.DocumentNotOwnedByUser({"document_id": document_id, "username": username})
+
+        document = self.update_document(document_id, DocumentStatusEnum.APPROVED, None)
+
+        if RolesEnum.AUDITOR in roles:
+            audit.AuditService(self.db).audit_document(document_id, username, None)
+        else:
+            audit.AuditService(self.db).create_audit_for_document(document_id)
 
         return document
 

@@ -67,7 +67,7 @@ async def get_image(image_id: int, db: get_db = Depends(),
 @authenticate()
 async def update_document(document_id: int, new_status: DocumentStatusEnum, db: get_db = Depends(),
                           credentials: JwtAuthorizationCredentials = Security(access_security)) -> Document:
-    result = DocumentService(db).update_document(document_id, new_status)
+    result = DocumentService(db).update_document(document_id, new_status, None)
     return result
 
 
@@ -75,9 +75,12 @@ async def update_document(document_id: int, new_status: DocumentStatusEnum, db: 
 @authenticate()
 async def approve_document(document_id: int, approve: bool, db: get_db = Depends(),
                            credentials: JwtAuthorizationCredentials = Security(access_security)) -> Document:
+    username = credentials["username"]
+    roles = credentials["roles"]
+
     if approve:
-        result = DocumentService(db).approve_document(document_id)
+        result = DocumentService(db).approve_document(document_id, username, roles)
     else:
-        result = DocumentService(db).update_document(document_id, DocumentStatusEnum.REFUSED)
+        result = DocumentService(db).update_document(document_id, DocumentStatusEnum.REFUSED, None)
 
     return result

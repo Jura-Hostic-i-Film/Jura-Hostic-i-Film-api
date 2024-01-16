@@ -4,7 +4,7 @@ from fastapi_jwt import JwtAuthorizationCredentials
 from app.config.database import get_db
 from app.config.jwt import access_security
 from app.decorators.authenticate import authenticate
-from app.schemas.audit import Audit, AuditCreate
+from app.schemas.audit import Audit, AuditCreate, DocumentSummary
 from app.services.audit import AuditService
 from app.utils.enums import ActionStatus, RolesEnum
 
@@ -75,9 +75,10 @@ async def create_audit_request(audit: AuditCreate, db: get_db = Depends(),
 
 @router.post("/{document_id}")
 @authenticate([RolesEnum.ADMIN, RolesEnum.AUDITOR])
-async def audit_document(document_id: int, db: get_db = Depends(),
+async def audit_document(document_id: int, document_summary: DocumentSummary | None = None,
+                         db: get_db = Depends(),
                          credentials: JwtAuthorizationCredentials = Security(access_security)) -> Audit:
-    result = AuditService(db).audit_document(document_id, credentials["username"])
+    result = AuditService(db).audit_document(document_id, credentials["username"], document_summary)
     return result
 
 

@@ -8,7 +8,7 @@ IMAGE_STORAGE_CONNECTION_STRING = f"DefaultEndpointsProtocol={settings.DefaultEn
 IMAGE_PATH = settings.image_path
 
 if DATABASE_URL.startswith("sqlite"):
-    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}, pool_size=10, max_overflow=20)
 else:
     engine = create_engine(DATABASE_URL)
 

@@ -20,6 +20,14 @@ archive2 = ArchiveDB(
     archive_by=director.id,
 )
 
+archive3 = ArchiveDB(
+    archive_number=3,
+    status=ArchiveStatus.AWAITING_SIGNATURE,
+    archive_at=None,
+    document_id=1,
+    archive_by=2,
+)
+
 archives = [archive1, archive2]
 
 archive_create = ArchiveCreate(

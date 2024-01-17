@@ -10,5 +10,8 @@ class Settings(BaseSettings):
     AccountKey: str | None = None
     EndpointSuffix: str | None = None
     image_path: str = "images"
+    vision_key: str | None = None
+    vision_endpoint: str | None = None
+
 
 settings = Settings()

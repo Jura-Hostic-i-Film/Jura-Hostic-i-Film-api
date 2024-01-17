@@ -2,10 +2,10 @@ from unittest.mock import Mock, patch
 
 from _pytest.python_api import raises
 
-from app.services.documents import DocumentService, ImageService, ImageCRUD
+from app.services.documents import DocumentService, ImageService, ImageCRUD, DocumentCRUD
 from app.utils.enums import DocumentStatusEnum
 from app.utils.exceptions.document_exceptions import DocumentException
-from tests.documents.util import document1, document2, documents, uploaded_image, imageDB
+from tests.documents.util import document1, document2, documents, uploaded_image, imageDB, document3
 from tests.users.util import admin
 
 
@@ -92,3 +92,32 @@ def test_get_image():
     mock_image_crud.get_image.assert_called_once()
     assert result == uploaded_image
 
+
+def test_update_document():
+    mock_document_crud = Mock(spec=DocumentCRUD)
+    mock_document = Mock(spec=document2, document_status=DocumentStatusEnum.APPROVED)
+    mock_document_crud.get_document.return_value = mock_document
+    mock_document_crud.update_document.return_value = document3
+    db = Mock()
+
+    document_service = DocumentService(db)
+
+    with patch("app.services.documents.DocumentCRUD", return_value=mock_document_crud):
+        result = document_service.update_document(2, DocumentStatusEnum.AUDITED, None)
+
+    mock_document_crud.update_document.assert_called_once()
+    assert result == document3
+
+
+def test_update_document_with_invalid_status():
+    mock_document_crud = Mock(spec=DocumentCRUD)
+    mock_document = Mock(spec=document2, document_status=DocumentStatusEnum.APPROVED)
+    mock_document_crud.get_document.return_value = mock_document
+    mock_document_crud.update_document.return_value = document3
+    db = Mock()
+
+    document_service = DocumentService(db)
+
+    with patch("app.services.documents.DocumentCRUD", return_value=mock_document_crud):
+        with raises(DocumentException.DocumentStatusNotCompatible):
+            document_service.update_document(2, DocumentStatusEnum.ARCHIVED, None)

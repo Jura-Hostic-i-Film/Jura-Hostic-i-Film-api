@@ -36,4 +36,13 @@ document2 = Document(
     document_status=DocumentStatusEnum.APPROVED,
     scan_time="2021-01-01T00:00:00",
 )
+document3 = Document(
+    id=2,
+    image_id=1,
+    owner=director,
+    document_type=DocumentTypeEnum.INTERNAL,
+    summary="test",
+    document_status=DocumentStatusEnum.AUDITED,
+    scan_time="2021-01-01T00:00:00",
+)
 documents = [document1, document2]

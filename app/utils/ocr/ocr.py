@@ -1,9 +1,9 @@
-from random import randint
-
 import cv2
 import numpy as np
+import requests
 from easyocr import easyocr
 
+from app.config.base import settings
 from app.utils.exceptions.document_exceptions import DocumentException
 from app.utils.ocr.processors import Resizer, FastDenoiser, OtsuThresholder
 from app.utils.ocr.hough_line_corner_detector import HoughLineCornerDetector
@@ -123,7 +123,39 @@ class PageExtractor:
         return rect
 
 
-def extract_text_from_image(image):
+def extract_text_from_image_azure(image: bytes):
+    key = settings.vision_key
+    endpoint = settings.vision_endpoint
+
+    complete_endpoint = f"{endpoint}computervision/imageanalysis:analyze?features=read&language=hr&api-version=2023-10-01"
+
+    headers = {
+        'Content-Type': 'application/octet-stream',
+        'Ocp-Apim-Subscription-Key': key,
+    }
+
+    content = image
+
+    text = ""
+
+    try:
+        response = requests.post(complete_endpoint, headers=headers, data=content)
+        response.raise_for_status()
+        analysis = response.json()
+        blocks = analysis["readResult"]["blocks"]
+        for block in blocks:
+            lines = block["lines"]
+            block_text = "\n".join([line["text"] for line in lines])
+
+            text += block_text + "\n\n"
+
+    except Exception as e:
+        raise DocumentException.DocumentNotDetected()
+
+    return text
+
+
+def extract_text_from_image_locally(image):
     # Initialize the OCR reader
     reader = easyocr.Reader(['hr', 'en'])
 
@@ -137,10 +169,6 @@ def extract_text_from_image(image):
 
 
 def detect_document(image: bytes):
-    possible_summaries = ["R123456 text", "P123456789 text", "INT1234 text"]
-    summary = possible_summaries[randint(0, 2)]
-    return summary
-
     page_extractor = PageExtractor(
         preprocessors=[
             Resizer(height=1280, output_process=False),
@@ -156,7 +184,11 @@ def detect_document(image: bytes):
     )
 
     extracted = page_extractor(image)
-    text = extract_text_from_image(extracted)
+
+    if settings.vision_key is not None and settings.vision_endpoint is not None:
+        text = extract_text_from_image_azure(image)
+    else:
+        text = extract_text_from_image_locally(extracted)
 
     return text
 
@@ -203,5 +235,5 @@ if __name__ == "__main__":
         cv2.imshow("Extracted page", extracted)
         cv2.waitKey(0)
 
-    text = extract_text_from_image(extracted)
+    text = extract_text_from_image_locally(extracted)
     print(text)

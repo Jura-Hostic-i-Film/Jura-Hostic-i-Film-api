@@ -60,7 +60,7 @@ async def get_image(image_id: int, db: get_db = Depends(),
                     credentials: JwtAuthorizationCredentials = Security(access_security)):
     image = ImageService(db).get_image(image_id)
 
-    return StreamingResponse(io.BytesIO(image.file.read()), media_type="image/jpeg")
+    return StreamingResponse(image.file, media_type="image/jpeg")
 
 
 @router.post("/update/{document_id}")

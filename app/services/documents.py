@@ -1,10 +1,11 @@
+import io
 import os
 import re
 from datetime import datetime
 from random import randint
 from typing import Type
 
-from fastapi import UploadFile, File
+from fastapi import UploadFile
 
 from app.config.base import settings
 from app.config.database import IMAGE_STORAGE_CONNECTION_STRING
@@ -181,14 +182,16 @@ class ImageCRUD(AppCRUD):
             # get image from blob storage
             try:
                 image_data = self.container_client.download_blob(image_path)
-                image_file = UploadFile(filename=image_path, file=File(image_data.readall()))
+                f = io.BytesIO(image_data.readall())
+                image_file = UploadFile(filename=image_path, file=f)
             except FileNotFoundError:
                 raise DocumentException.ImageNotFound({"image_id": image_id})
         else:
             # get image from disk
             try:
                 file = open(image_path, "rb")
-                image_file = UploadFile(filename=image_path, file=file)
+                f = io.BytesIO(file.read())
+                image_file = UploadFile(filename=image_path, file=f)
             except FileNotFoundError:
                 raise DocumentException.ImageNotFound({"image_id": image_id})
 

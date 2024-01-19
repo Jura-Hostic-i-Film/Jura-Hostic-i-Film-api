@@ -8,6 +8,7 @@ class Role(BaseModel):
 
     class Config:
         from_attributes = True
+        use_enum_values = True
 
     def __dict__(self):
         return {"name": self.name}
@@ -26,6 +27,9 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+    roles: list[RolesEnum]
+
+class UserUpdate(UserBase):
     roles: list[RolesEnum]
 
 
@@ -48,3 +52,7 @@ class User(UserBase):
 
 class AccessToken(BaseModel):
     token: str
+
+
+class NewPassword(BaseModel):
+    password: str

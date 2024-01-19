@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, Table
 from sqlalchemy.orm import relationship
-
 from app.config.database import Base
+from app.models.archives import ArchiveDB
 
 user_role = Table(
     "user_role",
@@ -21,7 +21,10 @@ class UserDB(Base):
     first_name = Column(String)
     last_name = Column(String)
     roles = relationship("RoleDB", secondary=user_role, back_populates="users", cascade="all, delete")
-
+    documents = relationship("DocumentDB", back_populates="owner")
+    archives = relationship("ArchiveDB", back_populates="archived")
+    audits = relationship("AuditDB", back_populates="audited")
+    signatures = relationship("SignatureDB", back_populates="signed")
 
 class RoleDB(Base):
     __tablename__ = "roles"

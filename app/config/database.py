@@ -10,7 +10,7 @@ IMAGE_PATH = settings.image_path
 if DATABASE_URL.startswith("sqlite"):
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False}, pool_size=10, max_overflow=20)
 else:
-    engine = create_engine(DATABASE_URL)
+    engine = create_engine(DATABASE_URL, pool_size=10, max_overflow=20)
 
 if "None" in IMAGE_STORAGE_CONNECTION_STRING:
     # check if there is an image directory, if not create one
